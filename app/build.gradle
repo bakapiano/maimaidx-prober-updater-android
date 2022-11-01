@@ -4,7 +4,7 @@ android {
     compileSdkVersion compile_version
 
     defaultConfig {
-        applicationId "cc.aoeiuv020.vpnproxy"
+        applicationId "com.bakapiano.maimai.updater"
         minSdkVersion min_version
         targetSdkVersion target_version
         versionCode 1
@@ -69,11 +69,16 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 dependencies {
     implementation "com.android.support:appcompat-v7:$support_version"
     implementation "com.android.support:cardview-v7:$support_version"
     testImplementation "junit:junit:$junit_version"
-    implementation 'com.squareup.okhttp3:okhttp:3.9.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.10.0'
     implementation 'net.ripe.commons:commons-ip-math:1.22'
+    implementation 'org.nanohttpd:nanohttpd:2.2.0'
 }

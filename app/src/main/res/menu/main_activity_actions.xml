@@ -5,6 +5,10 @@
           app:showAsAction="always"
           app:actionViewClass="android.support.v7.widget.SwitchCompat"/>
 
-    <item android:id="@+id/menu_item_about"
-          android:title="@string/menu_item_about"/>
+    <item
+        android:id="@+id/menu_check_update"
+        android:title="检查更新" />
+    <item
+        android:id="@+id/menu_item_about"
+        android:title="关于" />
 </menu>

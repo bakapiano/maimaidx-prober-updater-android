@@ -1,35 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest
-xmlns:android="http://schemas.android.com/apk/res/android"
-package="cc.aoeiuv020.vpnproxy">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.bakapiano.maimai.updater">
 
-<uses-permission android:name="android.permission.INTERNET"/>
-<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-<application
-    android:allowBackup="true"
-    android:icon="@mipmap/ic_launcher"
-    android:label="@string/app_name"
-    android:theme="@style/AppTheme"
-    android:persistent="true">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
-    <activity
-        android:name=".ui.MainActivity"
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:launchMode="singleTask">
-        <intent-filter>
-            <action android:name="android.intent.action.MAIN"/>
-            <category android:name="android.intent.category.LAUNCHER"/>
-        </intent-filter>
-    </activity>
+        android:persistent="true"
+        android:theme="@style/AppTheme">
 
-    <service
-        android:name=".core.LocalVpnService"
-        android:permission="android.permission.BIND_VPN_SERVICE">
-        <intent-filter>
-            <action android:name="android.net.VpnService"/>
-        </intent-filter>
-    </service>
+        <activity
+            android:name="com.bakapiano.maimai.updater.ui.MainActivity"
+            android:label="@string/app_name"
+            android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
-</application>
+        <service
+            android:name="com.bakapiano.maimai.updater.vpn.core.LocalVpnService"
+            android:permission="android.permission.BIND_VPN_SERVICE">
+            <intent-filter>
+                <action android:name="android.net.VpnService" />
+            </intent-filter>
+        </service>
+
+        <service android:name="com.bakapiano.maimai.updater.server.HttpServerService" />
+
+    </application>
 
 </manifest>

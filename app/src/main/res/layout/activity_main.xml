@@ -9,10 +9,18 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
+        android:background="#2196F3"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
         app:cardElevation="4dp"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+
+    <EditText
+        android:id="@+id/username"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:text="Username" />
 
     <ScrollView
         android:id="@+id/scrollViewLog"
@@ -24,14 +32,28 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/textViewLog"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:padding="13dp"
-                android:textAppearance="?android:attr/textAppearanceSmall" />
-
         </LinearLayout>
     </ScrollView>
+
+    <EditText
+        android:id="@+id/password"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="textPassword" />
+
+    <Button
+        android:id="@+id/button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="saveText"
+        android:text="Save" />
+
+    <TextView
+        android:id="@+id/textViewLog"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="13dp"
+        android:textAppearance="?android:attr/textAppearanceSmall" />
 
 </LinearLayout>
