@@ -3,6 +3,8 @@ package com.bakapiano.maimai.updater.ui;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -81,6 +83,8 @@ public class MainActivity extends AppCompatActivity implements
         mContextSp = this.getSharedPreferences(
                 "com.bakapiano.maimai.updater.data",
                 Context.MODE_PRIVATE);
+
+        CrawlerCaller.listener = this;
 
         loadContextData();
     }
@@ -199,13 +203,19 @@ public class MainActivity extends AppCompatActivity implements
                             Intent intent = LocalVpnService.prepare(context);
                             if (intent == null) {
                                 startVPNService();
+                                // Jump to wechat app
+                                getWechatApi();
                             } else {
                                 startActivityForResult(intent, START_VPN_SERVICE_REQUEST_CODE);
                             }
                             // Start http service
                             startHttpService();
-                            // Jump to wechat app
-                            getWechatApi();
+
+                            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                            ClipData clip = ClipData.newPlainText("link", "http://bakapiano.com");
+                            clipboard.setPrimaryClip(clip);
+
+
                         }
                         else {
                             switchProxy.setChecked(false);
@@ -240,6 +250,8 @@ public class MainActivity extends AppCompatActivity implements
         if (requestCode == START_VPN_SERVICE_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 startVPNService();
+                // Jump to wechat app
+                getWechatApi();
             } else {
                 switchProxy.setChecked(false);
                 switchProxy.setEnabled(true);

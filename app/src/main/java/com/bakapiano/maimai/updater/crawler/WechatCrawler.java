@@ -1,5 +1,7 @@
 package com.bakapiano.maimai.updater.crawler;
 
+import static com.bakapiano.maimai.updater.crawler.CrawlerCaller.writeLog;
+
 import android.app.DownloadManager;
 import android.util.Log;
 
@@ -105,6 +107,7 @@ public class WechatCrawler {
 
         jar.clearCookieStroe();
         this.loginWechat(wechatAuthUrl);
+        writeLog("登陆完成");
 
         this.fetchMaimaiData(username, password);
         this.fetchChunithmData(username, password);
@@ -175,8 +178,12 @@ public class WechatCrawler {
 
             call = client.newCall(request);
             response = call.execute();
-            Log.d(TAG, response.body().string());
+
+            String result = response.body().string();
+            Log.d(TAG, result);
+            writeLog("diff = " + diff + " " + result);
         }
+        writeLog("maimai 数据更新完成");
     }
 
     private void fetchChunithmData(String username, String password) throws IOException {

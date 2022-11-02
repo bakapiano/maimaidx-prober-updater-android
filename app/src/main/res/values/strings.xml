@@ -14,7 +14,7 @@
     <string name="btn_more">More&#8230;</string>
     <string name="vpn_connected_status">connected</string>
     <string name="vpn_disconnected_status">disconnected</string>
-    <string name="about_info">舞萌 DX 查分器 - 数据更新器 by bakapiano</string>
+    <string name="about_info">舞萌 DX 查分器 - 安卓数据更新器\n交流qq群：224548349\nby:bakapiano</string>
     <string name="exit_confirm_info">This will disconnect the VPN connection, Are you sure to exit?</string>
     <string name="err_invalid_url">The config URL is invalid.</string>
     <string name="config_url_hint">URL or local file path</string>

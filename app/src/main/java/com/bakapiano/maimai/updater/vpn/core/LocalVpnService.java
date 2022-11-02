@@ -134,9 +134,9 @@ public class LocalVpnService extends VpnService implements Runnable {
         m_Handler.post(new Runnable() {
             @Override
             public void run() {
-                for (Map.Entry<onStatusChangedListener, Object> entry : m_OnStatusChangedListeners.entrySet()) {
-                    entry.getKey().onLogReceived(logString);
-                }
+//                for (Map.Entry<onStatusChangedListener, Object> entry : m_OnStatusChangedListeners.entrySet()) {
+//                    entry.getKey().onLogReceived(logString);
+//                }
             }
         });
     }
