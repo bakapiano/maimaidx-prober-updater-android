@@ -23,8 +23,9 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import  com.bakapiano.maimai.updater.R;
-import  com.bakapiano.maimai.updater.vpn.core.ProxyConfig.IPAddress;
+import com.bakapiano.maimai.updater.R;
+import com.bakapiano.maimai.updater.vpn.core.ProxyConfig.IPAddress;
+import com.bakapiano.maimai.updater.vpn.dns.DnsPacket;
 import com.bakapiano.maimai.updater.vpn.tcpip.CommonMethods;
 import com.bakapiano.maimai.updater.vpn.tcpip.IPHeader;
 import com.bakapiano.maimai.updater.vpn.tcpip.TCPHeader;
@@ -47,6 +48,7 @@ public class LocalVpnService extends VpnService implements Runnable {
     private Thread m_VPNThread;
     private ParcelFileDescriptor m_VPNInterface;
     private TcpProxyServer m_TcpProxyServer;
+    private DnsProxy m_DnsProxy;
     private FileOutputStream m_VPNOutputStream;
 
     private byte[] m_Packet;
@@ -92,6 +94,8 @@ public class LocalVpnService extends VpnService implements Runnable {
             m_TcpProxyServer.start();
             writeLog("LocalTcpServer started.");
 
+            m_DnsProxy = new DnsProxy();
+            m_DnsProxy.start();
         } catch (Exception e) {
             writeLog("Failed to start TCP/DNS Proxy");
         }
@@ -211,7 +215,7 @@ public class LocalVpnService extends VpnService implements Runnable {
                 boolean idle = true;
                 int size = in.read(m_Packet);
                 if (size > 0) {
-                    if (m_TcpProxyServer.Stopped) {
+                    if (m_DnsProxy.Stopped || m_TcpProxyServer.Stopped) {
                         in.close();
                         throw new Exception("LocalServer stopped.");
                     }
@@ -290,6 +294,14 @@ public class LocalVpnService extends VpnService implements Runnable {
             case IPHeader.UDP:
                 UDPHeader udpHeader = m_UDPHeader;
                 udpHeader.m_Offset = ipHeader.getHeaderLength();
+                if (ipHeader.getSourceIP() == LOCAL_IP && udpHeader.getDestinationPort() == 53) {
+                    m_DNSBuffer.clear();
+                    m_DNSBuffer.limit(ipHeader.getDataLength() - 8);
+                    DnsPacket dnsPacket = DnsPacket.FromBytes(m_DNSBuffer);
+                    if (dnsPacket != null && dnsPacket.Header.QuestionCount > 0) {
+                        m_DnsProxy.onDnsRequestReceived(ipHeader, udpHeader, dnsPacket);
+                    }
+                }
                 break;
         }
     }
@@ -412,12 +424,22 @@ public class LocalVpnService extends VpnService implements Runnable {
         } catch (Exception e) {
             // ignore
         }
+
+        try {
+            // DnsProxy
+            if (m_DnsProxy != null) {
+                m_DnsProxy.stop();
+                m_DnsProxy = null;
+                // writeLog("LocalDnsProxy stopped.");
+            }
+        } catch (Exception e) {
+            // ignore
+        }
         super.onDestroy();
     }
 
     public interface onStatusChangedListener {
         void onStatusChanged(String status, Boolean isRunning);
-
         void onLogReceived(String logString);
     }
 

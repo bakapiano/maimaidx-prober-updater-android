@@ -1,5 +1,6 @@
 package com.bakapiano.maimai.updater.crawler;
 
+import android.net.VpnService;
 import android.os.Handler;
 import android.util.Log;
 
@@ -30,6 +31,13 @@ public class CrawlerCaller {
 
     static public void fetchData(String authUrl) {
         new Thread(() -> {
+            try {
+                Thread.sleep(3000);
+                LocalVpnService.IsRunning = false;
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             try {
                 WechatCrawler crawler = new WechatCrawler();
                 crawler.fetchData(DataContext.Username, DataContext.Password, authUrl);

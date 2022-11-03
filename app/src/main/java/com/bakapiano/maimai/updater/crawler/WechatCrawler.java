@@ -106,14 +106,31 @@ public class WechatCrawler {
             wechatAuthUrl = wechatAuthUrl.replaceFirst("http", "https");
 
         jar.clearCookieStroe();
-        this.loginWechat(wechatAuthUrl);
-        writeLog("登陆完成");
 
-        this.fetchMaimaiData(username, password);
+        // Login wechat
+        try {
+            this.loginWechat(wechatAuthUrl);
+            writeLog("登陆完成");
+        }
+        catch(Exception error) {
+            writeLog("登陆时出现错误:\n" + error.toString());
+        }
+
+        // Fetch maimai data
+        try {
+            this.fetchMaimaiData(username, password);
+            writeLog("maimai 数据更新完成");
+        }
+        catch (Exception error) {
+            writeLog("maimai 数据更新时出线错误:\n" + error.toString());
+        }
+
+        // Fetch chuithm data
         this.fetchChunithmData(username, password);
     }
 
     private void loginWechat(String wechatAuthUrl) throws IOException {
+        this.buildHttpClient(false);
         Log.d(TAG, wechatAuthUrl);
 
         Request request = new Request.Builder()
@@ -183,7 +200,6 @@ public class WechatCrawler {
             Log.d(TAG, result);
             writeLog("diff = " + diff + " " + result);
         }
-        writeLog("maimai 数据更新完成");
     }
 
     private void fetchChunithmData(String username, String password) throws IOException {

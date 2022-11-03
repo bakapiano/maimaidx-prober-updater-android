@@ -42,9 +42,14 @@ public class NatSessionManager {
         session.RemoteIP = remoteIP;
         session.RemotePort = remotePort;
 
+//        if (ProxyConfig.isFakeIP(remoteIP)) {
+//            session.RemoteHost = DnsProxy.reverseLookup(remoteIP);
+//        }
+
         if (session.RemoteHost == null) {
             session.RemoteHost = CommonMethods.ipIntToString(remoteIP);
         }
+
         Sessions.put(portKey, session);
         return session;
     }
