@@ -8,6 +8,8 @@ import com.bakapiano.maimai.updater.ui.DataContext;
 import com.bakapiano.maimai.updater.vpn.core.LocalVpnService;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -19,14 +21,26 @@ public class CrawlerCaller {
     static public String getWechatAuthUrl() {
         try {
             WechatCrawler crawler = new WechatCrawler();
-            return crawler.getWechatAuthUrl();
+            String url = crawler.getWechatAuthUrl();
+            writeLog("微信登录url:");
+            if (url != null) writeLog(url);
+            return url;
         } catch (IOException error) {
+            writeLog("获取微信登录url时出现错误:");
+            writeLog(error);
             return null;
         }
     }
 
     static public void writeLog(String text) {
         m_Handler.post(() -> listener.onLogReceived(text));
+    }
+
+    static public void writeLog(Exception e) {
+        StringWriter sw = new StringWriter();
+        e.printStackTrace(new PrintWriter(sw));
+        String exceptionAsString = sw.toString();
+        m_Handler.post(() -> listener.onLogReceived(exceptionAsString));
     }
 
     static public void fetchData(String authUrl) {
@@ -36,13 +50,14 @@ public class CrawlerCaller {
                 LocalVpnService.IsRunning = false;
                 Thread.sleep(3000);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                writeLog(e);
             }
+
             try {
                 WechatCrawler crawler = new WechatCrawler();
                 crawler.fetchData(DataContext.Username, DataContext.Password, authUrl);
             } catch (IOException e) {
-                e.printStackTrace();
+                writeLog(e);
             }
         }).start();
     }

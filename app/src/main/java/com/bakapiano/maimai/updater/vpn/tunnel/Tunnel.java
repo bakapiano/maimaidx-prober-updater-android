@@ -24,8 +24,9 @@ public abstract class Tunnel {
     public Tunnel m_BrotherTunnel;
     private boolean m_Disposed;
     private InetSocketAddress m_ServerEP;
-    public Tunnel(SocketChannel innerChannel, Selector selector) {
+    public Tunnel(SocketChannel innerChannel, Selector selector) throws IOException {
         this.m_InnerChannel = innerChannel;
+        this.m_InnerChannel.socket().setSoTimeout(1000*30);
         this.m_Selector = selector;
         SessionCount++;
     }
@@ -33,6 +34,7 @@ public abstract class Tunnel {
         SocketChannel innerChannel = SocketChannel.open();
         innerChannel.configureBlocking(false);
         this.m_InnerChannel = innerChannel;
+        this.m_InnerChannel.socket().setSoTimeout(1000*30);
         this.m_Selector = selector;
         this.m_ServerEP = serverAddress;
         SessionCount++;

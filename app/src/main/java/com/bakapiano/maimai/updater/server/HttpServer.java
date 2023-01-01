@@ -1,5 +1,7 @@
 package com.bakapiano.maimai.updater.server;
 
+import static com.bakapiano.maimai.updater.ui.DataContext.HookHost;
+
 import android.util.Log;
 
 import com.bakapiano.maimai.updater.crawler.CrawlerCaller;
@@ -11,7 +13,7 @@ import fi.iki.elonen.NanoHTTPD;
 
 
 public class HttpServer extends NanoHTTPD {
-    public static int Port = 8084;
+    public static int Port = 8284;
     private final static String TAG = "HttpServer";
 
     protected HttpServer() throws IOException {
@@ -38,7 +40,7 @@ public class HttpServer extends NanoHTTPD {
     // To avoid fu***ing cache of wechat webview client
     private Response redirectToAuthUrlWithRandomParm(IHTTPSession session) {
         Response r = newFixedLengthResponse(Response.Status.REDIRECT, MIME_HTML, "");
-        r.addHeader("Location", "http://bakapiano.com/auth?random=" + System.currentTimeMillis());
+        r.addHeader("Location", "http://" + HookHost + "/auth?random=" + System.currentTimeMillis());
         return r;
     }
 

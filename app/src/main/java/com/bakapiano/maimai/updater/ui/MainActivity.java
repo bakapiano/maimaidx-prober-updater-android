@@ -1,5 +1,7 @@
 package com.bakapiano.maimai.updater.ui;
 
+import static com.bakapiano.maimai.updater.ui.DataContext.HookHost;
+
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
@@ -16,6 +18,7 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SwitchCompat;
 import android.support.v7.widget.Toolbar;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -28,6 +31,7 @@ import android.widget.Toast;
 
 import java.io.File;
 import java.util.Calendar;
+import java.util.Random;
 
 import com.bakapiano.maimai.updater.R;
 import com.bakapiano.maimai.updater.crawler.Callback;
@@ -75,6 +79,7 @@ public class MainActivity extends AppCompatActivity implements
 
         assert textViewLog != null;
         textViewLog.setText(GL_HISTORY_LOGS);
+        textViewLog.setMovementMethod(ScrollingMovementMethod.getInstance());
         scrollViewLog.fullScroll(ScrollView.FOCUS_DOWN);
 
         mCalendar = Calendar.getInstance();
@@ -171,9 +176,10 @@ public class MainActivity extends AppCompatActivity implements
 
         Log.d(Constant.TAG, logString);
 
-        if (textViewLog.getLineCount() > 200) {
-            textViewLog.setText("");
-        }
+//        if (textViewLog.getLineCount() > 200) {
+//            textViewLog.setText("");
+//        }
+
         textViewLog.append(logString);
         scrollViewLog.fullScroll(ScrollView.FOCUS_DOWN);
         GL_HISTORY_LOGS = textViewLog.getText() == null ? "" : textViewLog.getText().toString();
@@ -189,6 +195,7 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private Object switchLock = new Object();
+
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
         if (!switchProxy.isEnabled()) return;
@@ -211,13 +218,16 @@ public class MainActivity extends AppCompatActivity implements
                             // Start http service
                             startHttpService();
 
+                            String link = "http://" + getRandomString(10) + ".redirect." + HookHost;
+                            if (DataContext.CompatibleMode) {
+                                link = "https://maimai.bakapiano.com/shortcut?username="
+                                        + DataContext.Username + "&password=" + DataContext.Password;
+                            }
+
                             ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                            ClipData clip = ClipData.newPlainText("link", "http://bakapiano.com");
+                            ClipData clip = ClipData.newPlainText("link", link);
                             clipboard.setPrimaryClip(clip);
-
-
-                        }
-                        else {
+                        } else {
                             switchProxy.setChecked(false);
                             switchProxy.setEnabled(true);
                         }
@@ -376,5 +386,16 @@ public class MainActivity extends AppCompatActivity implements
             startActivity(intent);
         } catch (ActivityNotFoundException ignored) {
         }
+    }
+
+    public static String getRandomString(int length){
+        String str="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        Random random = new Random();
+        StringBuffer sb = new StringBuffer();
+        for(int i=0;i<length;i++){
+            int number=random.nextInt(62);
+            sb.append(str.charAt(number));
+        }
+        return sb.toString();
     }
 }

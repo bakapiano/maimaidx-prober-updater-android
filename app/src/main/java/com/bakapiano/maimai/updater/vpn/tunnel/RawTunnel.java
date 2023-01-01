@@ -11,7 +11,7 @@ public class RawTunnel extends Tunnel {
         super(serverAddress, selector);
     }
 
-    public RawTunnel(SocketChannel innerChannel, Selector selector) {
+    public RawTunnel(SocketChannel innerChannel, Selector selector) throws Exception {
         super(innerChannel, selector);
         // TODO Auto-generated constructor stub
     }

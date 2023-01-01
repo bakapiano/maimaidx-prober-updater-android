@@ -17,7 +17,7 @@ public class SimpleCookieJar implements CookieJar {
     private final Object lock = new Object();
 
     @Override
-    public void saveFromResponse(HttpUrl httpUrl, @NotNull List<Cookie> newCookies) {
+    public void saveFromResponse(HttpUrl httpUrl, List<Cookie> newCookies) {
         synchronized (lock) {
             HashMap<String, Cookie> map = new HashMap<>();
             List<Cookie> oldCookies = cookieStore.get(httpUrl.host());
@@ -27,8 +27,10 @@ public class SimpleCookieJar implements CookieJar {
                 }
             }
             // Override old cookie with same name
-            for (Cookie cookie : newCookies) {
-                map.put(cookie.name(), cookie);
+            if (newCookies != null) {
+                for (Cookie cookie : newCookies) {
+                    map.put(cookie.name(), cookie);
+                }
             }
             List<Cookie> mergedList = new ArrayList<Cookie>();
             for (Map.Entry<String, Cookie> pair : map.entrySet()) {

@@ -8,6 +8,7 @@ import android.util.Log;
 import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import okhttp3.Call;
+import okhttp3.ConnectionSpec;
 import okhttp3.Cookie;
 import okhttp3.CookieJar;
 import okhttp3.HttpUrl;
@@ -33,6 +35,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.TlsVersion;
 
 public class WechatCrawler {
     // Make this true for Fiddler to capture https request
@@ -111,18 +114,20 @@ public class WechatCrawler {
         try {
             this.loginWechat(wechatAuthUrl);
             writeLog("登陆完成");
-        }
-        catch(Exception error) {
-            writeLog("登陆时出现错误:\n" + error.toString());
+        } catch (Exception error) {
+            writeLog("登陆时出现错误:\n");
+            writeLog(error);
+            return;
         }
 
         // Fetch maimai data
         try {
             this.fetchMaimaiData(username, password);
             writeLog("maimai 数据更新完成");
-        }
-        catch (Exception error) {
-            writeLog("maimai 数据更新时出线错误:\n" + error.toString());
+        } catch (Exception error) {
+            writeLog("maimai 数据更新时出线错误:");
+            writeLog(error);
+            return;
         }
 
         // Fetch chuithm data
@@ -130,8 +135,10 @@ public class WechatCrawler {
     }
 
     private void loginWechat(String wechatAuthUrl) throws IOException {
-        this.buildHttpClient(false);
+        this.buildHttpClient(true);
+
         Log.d(TAG, wechatAuthUrl);
+        writeLog("登录url:\n" + wechatAuthUrl);
 
         Request request = new Request.Builder()
                 .addHeader("Host", "tgk-wcaime.wahlap.com")
@@ -152,14 +159,26 @@ public class WechatCrawler {
         Call call = client.newCall(request);
         Response response = call.execute();
 
+        try {
+            String responseBody = response.body().string();
+            Log.d(TAG, responseBody);
+//            writeLog(responseBody);
+        }
+        catch (NullPointerException error) {
+            writeLog(error);
+        }
+        writeLog(String.valueOf(response.code()));
+
         // Handle redirect manually
-        String newUrl = response.headers().get("Location");
-        request = new Request.Builder()
-                .url(newUrl)
-                .get()
-                .build();
-        call = client.newCall(request);
-        response = call.execute();
+        String location = response.headers().get("Location");
+        if (response.code() >= 300 && response.code() < 400 && location != null) {
+            request = new Request.Builder()
+                    .url(location)
+                    .get()
+                    .build();
+            call = client.newCall(request);
+            response = call.execute();
+        }
     }
 
     private void fetchMaimaiData(String username, String password) throws IOException {
@@ -211,9 +230,9 @@ public class WechatCrawler {
 
         if (IGNORE_CERT) ignoreCertBuilder(builder);
 
-        builder.connectTimeout(30, TimeUnit.SECONDS);
-        builder.readTimeout(30, TimeUnit.SECONDS);
-        builder.writeTimeout(30, TimeUnit.SECONDS);
+        builder.connectTimeout(120, TimeUnit.SECONDS);
+        builder.readTimeout(120, TimeUnit.SECONDS);
+        builder.writeTimeout(120, TimeUnit.SECONDS);
 
         builder.followRedirects(followRedirect);
         builder.followSslRedirects(followRedirect);
@@ -229,6 +248,17 @@ public class WechatCrawler {
             return chain.proceed(request);
         };
         builder.addInterceptor(noCacheInterceptor);
+
+        // Fix SSL handle shake error
+        ConnectionSpec spec = new ConnectionSpec.Builder(ConnectionSpec.COMPATIBLE_TLS)
+                .tlsVersions(TlsVersion.TLS_1_2, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0)
+                .allEnabledCipherSuites()
+                .build();
+        // 兼容http接口
+        ConnectionSpec spec1 = new ConnectionSpec.Builder(ConnectionSpec.CLEARTEXT).build();
+        builder.connectionSpecs(Arrays.asList(spec, spec1));
+
+        builder.pingInterval(3, TimeUnit.SECONDS);
 
         client = builder.build();
     }

@@ -25,6 +25,7 @@ public class TcpProxyServer implements Runnable {
     public TcpProxyServer(int port) throws IOException {
         m_Selector = Selector.open();
         m_ServerSocketChannel = ServerSocketChannel.open();
+        m_ServerSocketChannel.socket().setSoTimeout(1000*30);
         m_ServerSocketChannel.configureBlocking(false);
         m_ServerSocketChannel.socket().bind(new InetSocketAddress(port));
         m_ServerSocketChannel.register(m_Selector, SelectionKey.OP_ACCEPT);

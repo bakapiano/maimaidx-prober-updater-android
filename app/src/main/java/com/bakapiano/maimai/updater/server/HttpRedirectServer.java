@@ -7,7 +7,7 @@ import java.io.IOException;
 import fi.iki.elonen.NanoHTTPD;
 
 public class HttpRedirectServer extends NanoHTTPD {
-    public static int Port = 9957;
+    public static int Port = 9457;
     private final static String TAG = "HttpRedirectServer";
 
     protected HttpRedirectServer() throws IOException {

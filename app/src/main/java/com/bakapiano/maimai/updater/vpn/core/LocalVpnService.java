@@ -1,5 +1,7 @@
 package com.bakapiano.maimai.updater.vpn.core;
 
+import static com.bakapiano.maimai.updater.vpn.core.Constant.TAG;
+
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -19,6 +21,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -138,9 +142,9 @@ public class LocalVpnService extends VpnService implements Runnable {
         m_Handler.post(new Runnable() {
             @Override
             public void run() {
-//                for (Map.Entry<onStatusChangedListener, Object> entry : m_OnStatusChangedListeners.entrySet()) {
-//                    entry.getKey().onLogReceived(logString);
-//                }
+                for (Map.Entry<onStatusChangedListener, Object> entry : m_OnStatusChangedListeners.entrySet()) {
+                    entry.getKey().onLogReceived(logString);
+                }
             }
         });
     }
@@ -155,7 +159,7 @@ public class LocalVpnService extends VpnService implements Runnable {
     }
 
     String getAppInstallID() {
-        SharedPreferences preferences = getSharedPreferences(Constant.TAG, MODE_PRIVATE);
+        SharedPreferences preferences = getSharedPreferences(TAG, MODE_PRIVATE);
         String appInstallID = preferences.getString("AppInstallID", null);
         if (appInstallID == null || appInstallID.isEmpty()) {
             appInstallID = UUID.randomUUID().toString();
@@ -184,7 +188,7 @@ public class LocalVpnService extends VpnService implements Runnable {
     @Override
     public synchronized void run() {
         try {
-            Log.d(Constant.TAG, "VPNService work thread is running... " + ID);
+            Log.d(TAG, "VPNService work thread is running... " + ID);
 
             ProxyConfig.AppInstallID = getAppInstallID();
             ProxyConfig.AppVersion = getVersionName();
@@ -196,7 +200,7 @@ public class LocalVpnService extends VpnService implements Runnable {
             runVPN();
 
         } catch (InterruptedException e) {
-            Log.e(Constant.TAG, "Exception", e);
+            Log.e(TAG, "Exception", e);
         } catch (Exception e) {
             e.printStackTrace();
             writeLog("Fatal error: %s", e.toString());
@@ -223,7 +227,7 @@ public class LocalVpnService extends VpnService implements Runnable {
                         onIPPacketReceived(m_IPHeader, size);
                         idle = false;
                     } catch (IOException ex) {
-                        Log.e(Constant.TAG, "IOException when processing IP packet", ex);
+                        Log.e(TAG, "IOException when processing IP packet", ex);
                     }
                 }
                 if (idle) {
@@ -253,7 +257,7 @@ public class LocalVpnService extends VpnService implements Runnable {
                             m_ReceivedBytes += size;
                         } else {
                             if (ProxyConfig.IS_DEBUG)
-                                Log.d(Constant.TAG, "NoSession: " +
+                                Log.d(TAG, "NoSession: " +
                                         ipHeader.toString() + " " +
                                         tcpHeader.toString());
                         }
@@ -328,7 +332,7 @@ public class LocalVpnService extends VpnService implements Runnable {
 
         builder.addAddress(ipAddress.Address, ipAddress.PrefixLength);
         if (ProxyConfig.IS_DEBUG)
-            Log.d(Constant.TAG, String.format("addAddress: %s/%d\n", ipAddress.Address, ipAddress.PrefixLength));
+            Log.d(TAG, String.format("addAddress: %s/%d\n", ipAddress.Address, ipAddress.PrefixLength));
 
         if (m_Blacklist == null) {
             m_Blacklist = getResources().getStringArray(R.array.black_list);
@@ -343,31 +347,39 @@ public class LocalVpnService extends VpnService implements Runnable {
 
         builder.addRoute(CommonMethods.ipIntToString(ProxyConfig.FAKE_NETWORK_IP), 16);
 
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-//            PackageManager packageManager = getPackageManager();
-//            List<PackageInfo> list = packageManager.getInstalledPackages(0);
-//            HashSet<String> packageSet = new HashSet<>();
+        //        PackageManager packageManager = getPackageManager();
+//        List<PackageInfo> list = packageManager.getInstalledPackages(0);
+//        HashSet<String> packageSet = new HashSet<>();
 //
-//            for (int i = 0; i < list.size(); i++) {
-//                PackageInfo info = list.get(i);
-//                packageSet.add(info.packageName);
+//        for (int i = 0; i < list.size(); i++) {
+//            PackageInfo info = list.get(i);
+//            Log.d(TAG, info.packageName);
+//            if (info.packageName.equals("com.bakapiano.maimai.updater")) {
+//                Log.d(TAG, "Found maimai updater");
 //            }
-//
-//            for (String name : getResources().getStringArray(R.array.bypass_package_name)) {
-//                if (packageSet.contains(name)) {
-//                    builder.addDisallowedApplication(name);
-//                }
+//            else {
+//                packageSet.add(info.packageName);
+//                Log.d(TAG, "fuck" + info.packageName);
 //            }
 //        }
+//
+//        packageSet.add("com.tencent.mm");
+//
+//        for (String name : getResources().getStringArray(R.array.bypass_package_name)) {
+//            if (packageSet.contains(name)) {
+//                builder.addDisallowedApplication(name);
+//            }
+//        }
+
+//        builder.addDisallowedApplication("com.wechat.mm");
+//        builder.addAllowedApplication("com.tencent.mm");
+//        builder.addAllowedApplication("com.bakapiano.maimai.updater");
 
         Intent intent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
         builder.setConfigureIntent(pendingIntent);
 
         builder.setSession(ProxyConfig.Instance.getSessionName());
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        }
 
         ParcelFileDescriptor pfdDescriptor = builder.establish();
         onStatusChanged(ProxyConfig.Instance.getSessionName() + " " + getString(R.string.vpn_connected_status), true);
@@ -412,7 +424,7 @@ public class LocalVpnService extends VpnService implements Runnable {
 
     @Override
     public void onDestroy() {
-        Log.d(Constant.TAG, "VPNService(%s) destroyed: " + ID);
+        Log.d(TAG, "VPNService(%s) destroyed: " + ID);
         if (IsRunning) dispose();
         try {
             // ֹͣTcpServer

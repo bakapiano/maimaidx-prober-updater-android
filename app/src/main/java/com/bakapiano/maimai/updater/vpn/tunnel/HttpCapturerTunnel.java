@@ -17,7 +17,7 @@ public class HttpCapturerTunnel extends Tunnel {
         super(serverAddress, selector);
     }
 
-    public HttpCapturerTunnel(SocketChannel innerChannel, Selector selector) {
+    public HttpCapturerTunnel(SocketChannel innerChannel, Selector selector) throws Exception {
         super(innerChannel, selector);
     }
 
