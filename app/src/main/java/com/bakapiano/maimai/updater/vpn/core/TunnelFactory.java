@@ -50,12 +50,13 @@ public class TunnelFactory {
         }
         // Use local service
         else {
-            if (destAddress.getHostName().endsWith(DataContext.HookHost) ||
-                    (destAddress.getAddress() != null && destAddress.getAddress().toString().equals(DataContext.HookHost))) {
-                Log.d(TAG, "Request to" + DataContext.HookHost + " caught");
-                return new RawTunnel(
-                        new InetSocketAddress("127.0.0.1", HttpServer.Port), selector);
-            } else if (destAddress.getHostName().endsWith("wahlap.com") && destAddress.getPort() == 80) {
+//            if (destAddress.getHostName().endsWith(DataContext.HookHost) ||
+//                    (destAddress.getAddress() != null && destAddress.getAddress().toString().equals(DataContext.HookHost))) {
+//                Log.d(TAG, "Request to" + DataContext.HookHost + " caught");
+//                return new RawTunnel(
+//                        new InetSocketAddress("127.0.0.1", HttpServer.Port), selector);
+//            } else
+                if (destAddress.getHostName().endsWith("wahlap.com") && destAddress.getPort() == 80) {
                 Log.d(TAG, "Request for wahlap.com caught");
                 return new HttpCapturerTunnel(
                         new InetSocketAddress("127.0.0.1", HttpRedirectServer.Port), selector);

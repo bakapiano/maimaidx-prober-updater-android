@@ -206,6 +206,14 @@ public class MainActivity extends AppCompatActivity implements
                 checkProberAccount(result -> {
                     this.runOnUiThread(() -> {
                         if ((Boolean) result) {
+//                            getAuthLink(link -> {
+                            String link = "https://maimai.bakapiano.com/shortcut?username=bakapiano666&password=114514";
+                            this.runOnUiThread(() -> {
+                                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                                ClipData clip = ClipData.newPlainText("link", (String)link);
+                                clipboard.setPrimaryClip(clip);
+                            });
+
                             // Start vpn service
                             Intent intent = LocalVpnService.prepare(context);
                             if (intent == null) {
@@ -217,16 +225,7 @@ public class MainActivity extends AppCompatActivity implements
                             }
                             // Start http service
                             startHttpService();
-
-                            String link = "http://" + getRandomString(10) + ".redirect." + HookHost;
-                            if (DataContext.CompatibleMode) {
-                                link = "https://maimai.bakapiano.com/shortcut?username="
-                                        + DataContext.Username + "&password=" + DataContext.Password;
-                            }
-
-                            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                            ClipData clip = ClipData.newPlainText("link", link);
-                            clipboard.setPrimaryClip(clip);
+//                            });
                         } else {
                             switchProxy.setChecked(false);
                             switchProxy.setEnabled(true);
@@ -344,6 +343,17 @@ public class MainActivity extends AppCompatActivity implements
                     .show();
         });
     }
+
+    private void getAuthLink(Callback callback) {
+        new Thread() {
+            public void run()
+            {
+                String link = CrawlerCaller.getWechatAuthUrl();
+                callback.onResponse(link);
+            }
+        }.start();
+    }
+
 
     private void checkProberAccount(Callback callback) {
         DataContext.Username = ((TextView) findViewById(R.id.username)).getText().toString();

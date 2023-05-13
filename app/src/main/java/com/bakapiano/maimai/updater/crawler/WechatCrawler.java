@@ -134,7 +134,7 @@ public class WechatCrawler {
         this.fetchChunithmData(username, password);
     }
 
-    private void loginWechat(String wechatAuthUrl) throws IOException {
+    private void loginWechat(String wechatAuthUrl) throws Exception {
         this.buildHttpClient(true);
 
         Log.d(TAG, wechatAuthUrl);
@@ -167,7 +167,12 @@ public class WechatCrawler {
         catch (NullPointerException error) {
             writeLog(error);
         }
-        writeLog(String.valueOf(response.code()));
+
+        int code = response.code();
+        writeLog(String.valueOf(code));
+        if (code >= 400) {
+            throw new Exception("登陆时出现错误，请重试！");
+        }
 
         // Handle redirect manually
         String location = response.headers().get("Location");
