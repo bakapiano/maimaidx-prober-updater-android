@@ -2,17 +2,16 @@ package com.bakapiano.maimai.updater.crawler;
 
 import static com.bakapiano.maimai.updater.crawler.CrawlerCaller.writeLog;
 
-import android.app.DownloadManager;
+import android.support.annotation.NonNull;
 import android.util.Log;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.security.cert.CertificateException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,10 +24,8 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import okhttp3.Call;
+import okhttp3.Callback;
 import okhttp3.ConnectionSpec;
-import okhttp3.Cookie;
-import okhttp3.CookieJar;
-import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -104,7 +101,7 @@ public class WechatCrawler {
         return url;
     }
 
-    protected void fetchData(String username, String password, String wechatAuthUrl) throws IOException {
+    protected void fetchAndUploadData(String username, String password, Set<Integer> difficulties, String wechatAuthUrl) throws IOException {
         if (wechatAuthUrl.startsWith("http"))
             wechatAuthUrl = wechatAuthUrl.replaceFirst("http", "https");
 
@@ -122,7 +119,7 @@ public class WechatCrawler {
 
         // Fetch maimai data
         try {
-            this.fetchMaimaiData(username, password);
+            this.fetchMaimaiData(username, password, difficulties);
             writeLog("maimai 数据更新完成");
         } catch (Exception error) {
             writeLog("maimai 数据更新时出线错误:");
@@ -163,8 +160,7 @@ public class WechatCrawler {
             String responseBody = response.body().string();
             Log.d(TAG, responseBody);
 //            writeLog(responseBody);
-        }
-        catch (NullPointerException error) {
+        } catch (NullPointerException error) {
             writeLog(error);
         }
 
@@ -182,13 +178,45 @@ public class WechatCrawler {
                     .get()
                     .build();
             call = client.newCall(request);
-            response = call.execute();
+            call.execute().close();
         }
     }
 
-    private void fetchMaimaiData(String username, String password) throws IOException {
+    private void fetchMaimaiData(String username, String password, Set<Integer> difficulties) throws IOException {
         this.buildHttpClient(false);
-        for (int diff = 0; diff < 5; diff++) {
+        fetchAndUploadData(username, password, difficulties);
+    }
+
+    private static void uploadData(int i, String data) {
+        Request request = new Request.Builder()
+                .url("https://www.diving-fish.com/api/pageparser/page")
+                .addHeader("content-type", "text/plain")
+                .post(RequestBody.create(data, TEXT))
+                .build();
+        Callback callback = new Callback() {
+            @Override
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                try {
+                    throw e;
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+
+            @Override
+            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                assert response.body() != null;
+                String result = response.body().string();
+                Log.d(TAG, result);
+                writeLog("diff = " + i + " " + result);
+            }
+
+        };
+        client.newCall(request).enqueue(callback);
+    }
+
+    private static void fetchAndUploadData(String username, String password, Set<Integer> difficulties) throws IOException {
+        for (int diff : difficulties) {
             // Fetch data
             Request request = new Request.Builder()
                     .url("https://maimai.wahlap.com/maimai-mobile/record/musicGenre/search/?genre=99&diff=" + diff)
@@ -197,32 +225,19 @@ public class WechatCrawler {
             Log.d("Cookie", "diff = " + diff + " start");
 
             Call call = client.newCall(request);
-            Response response = call.execute();
+            try (Response response = call.execute()) {
+                @NonNull String data = Objects.requireNonNull(response.body()).string();
 
-            String data = null;
-            data = Objects.requireNonNull(response.body()).string();
+                Log.d(TAG, response.request().url() + " " + response.code());
+                Matcher matcher = Pattern.compile("<html.*>([\\s\\S]*)</html>").matcher(data);
+                if (matcher.find()) data = Objects.requireNonNull(matcher.group(1));
+                data = Pattern.compile("\\s+").matcher(data).replaceAll(" ");
 
-            Log.d(TAG, response.request().url().toString() + " " + response.code());
+                writeLog("diff = " + diff + " was cached");
 
-            Matcher matcher = null;
-            matcher = Pattern.compile("<html.*>([\\s\\S]*)</html>").matcher(data);
-            if (matcher.find()) data = matcher.group(1);
-            data = Pattern.compile("\\s+").matcher(data).replaceAll(" ");
-            data = "<login><u>" + username + "</u><p>" + password + "</p></login>" + data;
-
-            // Upload data to maimai-prober
-            request = new Request.Builder()
-                    .url("https://www.diving-fish.com/api/pageparser/page")
-                    .addHeader("content-type", "text/plain")
-                    .post(RequestBody.create(TEXT, data))
-                    .build();
-
-            call = client.newCall(request);
-            response = call.execute();
-
-            String result = response.body().string();
-            Log.d(TAG, result);
-            writeLog("diff = " + diff + " " + result);
+                // Upload data to maimai-prober
+                uploadData(diff, "<login><u>" + username + "</u><p>" + password + "</p></login>" + data);
+            }
         }
     }
 

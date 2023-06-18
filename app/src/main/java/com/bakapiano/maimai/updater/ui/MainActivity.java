@@ -1,6 +1,8 @@
 package com.bakapiano.maimai.updater.ui;
 
-import static com.bakapiano.maimai.updater.ui.DataContext.HookHost;
+import static com.bakapiano.maimai.updater.Util.copyText;
+import static com.bakapiano.maimai.updater.Util.getDifficulties;
+import static com.bakapiano.maimai.updater.crawler.CrawlerCaller.writeLog;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -23,13 +25,16 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ScrollView;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.util.BitSet;
 import java.util.Calendar;
 import java.util.Random;
 
@@ -110,7 +115,7 @@ public class MainActivity extends AppCompatActivity implements
 //        });
 //        builder.setCancelable(false);
 //        builder.show();
-        String text = "http://user:pass@127.0.0.1:8848";
+        @SuppressLint("AuthLeak") String text = "http://user:pass@127.0.0.1:8848";
         ProxyConfig.Instance.setProxy(text);
         ProxyConfig.setHttpProxyServer(MainActivity.this, text);
     }
@@ -155,8 +160,7 @@ public class MainActivity extends AppCompatActivity implements
                 Uri uri = Uri.parse(url);
                 if (!"http".equals(uri.getScheme()) && !"https".equals(uri.getScheme()))
                     return false;
-                if (uri.getHost() == null)
-                    return false;
+                return uri.getHost() != null;
             }
             return true;
         } catch (Exception e) {
@@ -194,11 +198,22 @@ public class MainActivity extends AppCompatActivity implements
         Toast.makeText(this, status, Toast.LENGTH_SHORT).show();
     }
 
-    private Object switchLock = new Object();
+    private final Object switchLock = new Object();
 
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
         if (!switchProxy.isEnabled()) return;
+        if (!switchProxy.isPressed()) return;
+        saveOptions();
+        saveDifficulties();
+
+        if (getDifficulties().isEmpty()) {
+            if (isChecked) {
+                writeLog("请至少勾选一个难度!");
+            }
+            switchProxy.setChecked(false);
+            return;
+        }
         Context context = this;
         if (LocalVpnService.IsRunning != isChecked) {
             switchProxy.setEnabled(false);
@@ -207,19 +222,19 @@ public class MainActivity extends AppCompatActivity implements
                     this.runOnUiThread(() -> {
                         if ((Boolean) result) {
 //                            getAuthLink(link -> {
-                            String link = "https://maimai.bakapiano.com/shortcut?username=bakapiano666&password=114514";
-                            this.runOnUiThread(() -> {
-                                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                                ClipData clip = ClipData.newPlainText("link", (String)link);
-                                clipboard.setPrimaryClip(clip);
-                            });
+                            if (DataContext.CopyUrl) {
+                                String link = "https://maimai.bakapiano.com/shortcut?username=bakapiano666&password=114514";
+                                this.runOnUiThread(() -> copyText(context, link));
+                            }
 
                             // Start vpn service
                             Intent intent = LocalVpnService.prepare(context);
                             if (intent == null) {
                                 startVPNService();
                                 // Jump to wechat app
-                                getWechatApi();
+                                if (DataContext.AutoLaunch) {
+                                    getWechatApi();
+                                }
                             } else {
                                 startActivityForResult(intent, START_VPN_SERVICE_REQUEST_CODE);
                             }
@@ -346,8 +361,7 @@ public class MainActivity extends AppCompatActivity implements
 
     private void getAuthLink(Callback callback) {
         new Thread() {
-            public void run()
-            {
+            public void run() {
                 String link = CrawlerCaller.getWechatAuthUrl();
                 callback.onResponse(link);
             }
@@ -358,6 +372,11 @@ public class MainActivity extends AppCompatActivity implements
     private void checkProberAccount(Callback callback) {
         DataContext.Username = ((TextView) findViewById(R.id.username)).getText().toString();
         DataContext.Password = ((TextView) findViewById(R.id.password)).getText().toString();
+
+        saveOptions();
+
+        saveDifficulties();
+
         if (DataContext.Username == null || DataContext.Password == null) {
             showInvalidAccountDialog();
             callback.onResponse(false);
@@ -369,21 +388,84 @@ public class MainActivity extends AppCompatActivity implements
         });
     }
 
+    private void saveDifficulties() {
+        DataContext.BasicEnabled = ((CheckBox) findViewById(R.id.basic)).isChecked();
+        DataContext.AdvancedEnabled = ((CheckBox) findViewById(R.id.advanced)).isChecked();
+        DataContext.ExpertEnabled = ((CheckBox) findViewById(R.id.expert)).isChecked();
+        DataContext.MasterEnabled = ((CheckBox) findViewById(R.id.master)).isChecked();
+        DataContext.RemasterEnabled = ((CheckBox) findViewById(R.id.remaster)).isChecked();
+    }
+
+    private void saveOptions() {
+        DataContext.CopyUrl = ((Switch) findViewById(R.id.copyUrl)).isChecked();
+        DataContext.AutoLaunch = ((Switch) findViewById(R.id.autoLaunch)).isChecked();
+    }
+
 
     private void loadContextData() {
         String username = mContextSp.getString("username", null);
         String password = mContextSp.getString("password", null);
+
+        boolean copyUrl = mContextSp.getBoolean("copyUrl", true);
+        boolean autoLaunch = mContextSp.getBoolean("autoLaunch", true);
+
+        boolean basicEnabled = mContextSp.getBoolean("basicEnabled", true);
+        boolean advancedEnabled = mContextSp.getBoolean("advancedEnabled", true);
+        boolean expertEnabled = mContextSp.getBoolean("expertEnabled", true);
+        boolean masterEnabled = mContextSp.getBoolean("masterEnabled", true);
+        boolean remasterEnabled = mContextSp.getBoolean("remasterEnabled", true);
+
+
         ((TextView) findViewById(R.id.username)).setText(username);
         ((TextView) findViewById(R.id.password)).setText(password);
+
+        ((Switch) findViewById(R.id.copyUrl)).setChecked(copyUrl);
+        ((Switch) findViewById(R.id.autoLaunch)).setChecked(autoLaunch);
+
+        ((CheckBox) findViewById(R.id.basic)).setChecked(basicEnabled);
+        ((CheckBox) findViewById(R.id.advanced)).setChecked(advancedEnabled);
+        ((CheckBox) findViewById(R.id.expert)).setChecked(expertEnabled);
+        ((CheckBox) findViewById(R.id.master)).setChecked(masterEnabled);
+        ((CheckBox) findViewById(R.id.remaster)).setChecked(remasterEnabled);
+
+
         DataContext.Username = username;
         DataContext.Password = password;
+
+        DataContext.CopyUrl = copyUrl;
+        DataContext.AutoLaunch = autoLaunch;
+
+        DataContext.BasicEnabled = basicEnabled;
+        DataContext.AdvancedEnabled = advancedEnabled;
+        DataContext.ExpertEnabled = expertEnabled;
+        DataContext.MasterEnabled = masterEnabled;
+        DataContext.RemasterEnabled = remasterEnabled;
     }
 
     private void saveContextData() {
         SharedPreferences.Editor editor = mContextSp.edit();
+        saveAccountContextData(editor);
+        saveOptionsContextData(editor);
+        saveDifficultiesContextData(editor);
+        editor.apply();
+    }
+
+    private static void saveDifficultiesContextData(SharedPreferences.Editor editor) {
+        editor.putBoolean("basicEnabled", DataContext.BasicEnabled);
+        editor.putBoolean("advancedEnabled", DataContext.AdvancedEnabled);
+        editor.putBoolean("expertEnabled", DataContext.ExpertEnabled);
+        editor.putBoolean("masterEnabled", DataContext.MasterEnabled);
+        editor.putBoolean("remasterEnabled", DataContext.RemasterEnabled);
+    }
+
+    private static void saveOptionsContextData(SharedPreferences.Editor editor) {
+        editor.putBoolean("copyUrl", DataContext.CopyUrl);
+        editor.putBoolean("autoLaunch", DataContext.AutoLaunch);
+    }
+
+    private static void saveAccountContextData(SharedPreferences.Editor editor) {
         editor.putString("username", DataContext.Username);
         editor.putString("password", DataContext.Password);
-        editor.apply();
     }
 
     private void getWechatApi() {
@@ -398,12 +480,12 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    public static String getRandomString(int length){
-        String str="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    public static String getRandomString(int length) {
+        String str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         Random random = new Random();
-        StringBuffer sb = new StringBuffer();
-        for(int i=0;i<length;i++){
-            int number=random.nextInt(62);
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < length; i++) {
+            int number = random.nextInt(62);
             sb.append(str.charAt(number));
         }
         return sb.toString();
