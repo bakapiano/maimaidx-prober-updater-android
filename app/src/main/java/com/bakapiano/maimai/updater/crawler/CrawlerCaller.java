@@ -1,8 +1,8 @@
 package com.bakapiano.maimai.updater.crawler;
 
-import android.net.VpnService;
+import static com.bakapiano.maimai.updater.Util.getDifficulties;
+
 import android.os.Handler;
-import android.util.Log;
 
 import com.bakapiano.maimai.updater.ui.DataContext;
 import com.bakapiano.maimai.updater.vpn.core.LocalVpnService;
@@ -10,8 +10,6 @@ import com.bakapiano.maimai.updater.vpn.core.LocalVpnService;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CrawlerCaller {
     private static final String TAG = "CrawlerCaller";
@@ -55,7 +53,7 @@ public class CrawlerCaller {
 
             try {
                 WechatCrawler crawler = new WechatCrawler();
-                crawler.fetchData(DataContext.Username, DataContext.Password, authUrl);
+                crawler.fetchAndUploadData(DataContext.Username, DataContext.Password, getDifficulties(), authUrl);
             } catch (IOException e) {
                 writeLog(e);
             }
