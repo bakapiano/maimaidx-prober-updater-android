@@ -9,11 +9,14 @@ public class DataContext {
     public static boolean AutoLaunch = true;
 
     public static String HookHost = "bakapiano.com";
+    public static String WebHost = "https://maimai.bakapiano.com/shortcut?username=bakapiano666&password=114514";
+    public static String ProxyHost = "proxy.bakapiano.com";
+    public static int ProxyPort = 2569;
     public static boolean CompatibleMode = false;
 
-    public static boolean BasicEnabled = true;
+    public static boolean BasicEnabled = false;
 
-    public static boolean AdvancedEnabled = true;
+    public static boolean AdvancedEnabled = false;
 
     public static boolean ExpertEnabled = true;
 

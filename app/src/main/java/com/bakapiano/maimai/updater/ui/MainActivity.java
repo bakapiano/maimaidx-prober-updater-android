@@ -4,6 +4,8 @@ import static com.bakapiano.maimai.updater.Util.copyText;
 import static com.bakapiano.maimai.updater.Util.getDifficulties;
 import static com.bakapiano.maimai.updater.crawler.CrawlerCaller.writeLog;
 
+import static java.lang.Integer.parseInt;
+
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
@@ -11,6 +13,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -28,6 +31,8 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -223,7 +228,7 @@ public class MainActivity extends AppCompatActivity implements
                         if ((Boolean) result) {
 //                            getAuthLink(link -> {
                             if (DataContext.CopyUrl) {
-                                String link = "https://maimai.bakapiano.com/shortcut?username=bakapiano666&password=114514";
+                                String link = DataContext.WebHost;
                                 this.runOnUiThread(() -> copyText(context, link));
                             }
 
@@ -321,6 +326,77 @@ public class MainActivity extends AppCompatActivity implements
                         .setPositiveButton(R.string.btn_ok, null)
                         .show();
                 return true;
+            case R.id.menu_item_proxy:
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("代理设置");
+
+                LinearLayout layout = new LinearLayout(this);
+                layout.setOrientation(LinearLayout.VERTICAL);
+
+                // 创建3个EditText输入框，并将其添加到LinearLayout中
+                TextView textView1 = new TextView(this);
+                textView1.setText("网页更新器地址：");
+                EditText editText1 = new EditText(this);
+                editText1.setText(DataContext.WebHost);
+                TextView textView2 = new TextView(this);
+                textView2.setText("代理地址：");
+                EditText editText2 = new EditText(this);
+                editText2.setText(DataContext.ProxyHost);
+                TextView textView3 = new TextView(this);
+                textView3.setText("代理端口：");
+                EditText editText3 = new EditText(this);
+                editText3.setText(DataContext.ProxyPort+"");
+                layout.addView(textView1);
+                layout.addView(editText1);
+                layout.addView(textView2);
+                layout.addView(editText2);
+                layout.addView(textView3);
+                layout.addView(editText3);
+
+                builder.setView(layout);
+
+                builder.setPositiveButton("确定", (dialog, which) -> {
+                    // 点击确定按钮的处理逻辑
+                    String input1 = editText1.getText().toString();
+                    String input2 = editText2.getText().toString();
+                    int input3 = parseInt(editText3.getText().toString());
+
+                    DataContext.WebHost = input1;
+                    DataContext.ProxyHost = input2;
+                    DataContext.ProxyPort = input3;
+
+                    mContextSp.edit()
+                            .putString("webHost",input1)
+                            .putString("proxyHost",input2)
+                            .putInt("proxyPort",input3)
+                            .apply();
+
+                    dialog.dismiss();
+                });
+
+                builder.setNegativeButton("取消", (dialog, which) -> dialog.dismiss());
+
+                builder.setNeutralButton("恢复默认", (dialog, which) -> {
+                    String input1 = "https://maimai.bakapiano.com/shortcut?username=bakapiano666&password=114514";
+                    String input2 = "proxy.bakapiano.com";
+                    int input3 = 2569;
+
+                    DataContext.WebHost = input1;
+                    DataContext.ProxyHost = input2;
+                    DataContext.ProxyPort = input3;
+
+                    mContextSp.edit()
+                            .putString("webHost",input1)
+                            .putString("proxyHost",input2)
+                            .putInt("proxyPort",input3)
+                            .apply();
+
+                    dialog.dismiss();
+                });
+
+                AlertDialog dialog = builder.create();
+                dialog.show();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -409,11 +485,15 @@ public class MainActivity extends AppCompatActivity implements
         boolean copyUrl = mContextSp.getBoolean("copyUrl", true);
         boolean autoLaunch = mContextSp.getBoolean("autoLaunch", true);
 
-        boolean basicEnabled = mContextSp.getBoolean("basicEnabled", true);
-        boolean advancedEnabled = mContextSp.getBoolean("advancedEnabled", true);
+        boolean basicEnabled = mContextSp.getBoolean("basicEnabled", false);
+        boolean advancedEnabled = mContextSp.getBoolean("advancedEnabled", false);
         boolean expertEnabled = mContextSp.getBoolean("expertEnabled", true);
         boolean masterEnabled = mContextSp.getBoolean("masterEnabled", true);
         boolean remasterEnabled = mContextSp.getBoolean("remasterEnabled", true);
+
+        String proxyHost = mContextSp.getString("porxyHost","proxy.bakapiano.com");
+        String webHost = mContextSp.getString("webHost","https://maimai.bakapiano.com/shortcut?username=bakapiano666&password=114514");
+        int proxyPort = mContextSp.getInt("porxyPort",2569);
 
 
         ((TextView) findViewById(R.id.username)).setText(username);
@@ -440,6 +520,10 @@ public class MainActivity extends AppCompatActivity implements
         DataContext.ExpertEnabled = expertEnabled;
         DataContext.MasterEnabled = masterEnabled;
         DataContext.RemasterEnabled = remasterEnabled;
+
+        DataContext.ProxyPort = proxyPort;
+        DataContext.ProxyHost = proxyHost;
+        DataContext.WebHost = webHost;
     }
 
     private void saveContextData() {
