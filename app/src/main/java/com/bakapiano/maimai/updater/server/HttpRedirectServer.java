@@ -25,6 +25,6 @@ public class HttpRedirectServer extends NanoHTTPD {
         return newFixedLengthResponse(
                 Response.Status.ACCEPTED,
                 MIME_HTML,
-                "<html><body>必要数据已获取,可关闭该窗口并请切回到更新器等待分数上传!</body></html><script>alert('必要数据已获取,请切回到更新器等待分数上传!');</script>");
+                "<html><body><h1>登录信息已获取,可关闭该窗口并请切回到更新器等待分数上传!</h1></body></html><script>alert('登录信息已获取,请切回到更新器等待分数上传!');</script>");
     }
 }

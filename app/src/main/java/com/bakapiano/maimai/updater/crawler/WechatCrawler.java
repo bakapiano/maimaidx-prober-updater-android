@@ -45,11 +45,18 @@ public class WechatCrawler {
     // Make this true for Fiddler to capture https request
     private static final boolean IGNORE_CERT = false;
 
+    private static final int MAX_RETRY_COUNT = 4;
+
     private static final String TAG = "Crawler";
+
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+
     private static final MediaType TEXT = MediaType.parse("text/plain");
+
     private static final SimpleCookieJar jar = new SimpleCookieJar();
+
     private static final Map<Integer, String> diffMap = new HashMap<>();
+
     private static OkHttpClient client = null;
 
     protected WechatCrawler() {
@@ -61,16 +68,12 @@ public class WechatCrawler {
         buildHttpClient(false);
     }
 
-    private static void uploadData(int i, String data) {
+    private static void uploadData(Integer diff, String data, Integer retryCount) {
         Request request = new Request.Builder().url("https://www.diving-fish.com/api/pageparser/page").addHeader("content-type", "text/plain").post(RequestBody.create(data, TEXT)).build();
         Callback callback = new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                try {
-                    throw e;
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
-                }
+                retryUploadData(e, diff, data, retryCount);
             }
 
             @Override
@@ -78,94 +81,66 @@ public class WechatCrawler {
                 assert response.body() != null;
                 String result = response.body().string();
                 Log.d(TAG, result);
-                writeLog(diffMap.get(i) + " 难度数据上传完成：" + result);
-//                writeLog("diff = " + i + " " + result);
+                writeLog(diffMap.get(diff) + " 难度数据上传完成：" + result);
             }
-
         };
         client.newCall(request).enqueue(callback);
     }
 
-    private static void fetchAndUploadData(String username, String password, Set<Integer> difficulties) throws IOException {
-        fetchAndUploadData(username, password, difficulties, new ArrayList<>());
+    private static void retryUploadData(Exception e, Integer diff, String data, Integer currentRetryCount) {
+        writeLog("上传 " + diffMap.get(diff) + " 分数数据至水鱼查分器时出现错误: " + e);
+        if (currentRetryCount < MAX_RETRY_COUNT) {
+            writeLog("进行第" + currentRetryCount.toString() + "次重试");
+            uploadData(diff, data, currentRetryCount + 1);
+        }
+        else {
+            writeLog(diffMap.get(diff) + "难度数据上传失败！");
+        }
     }
 
-    private static void fetchAndUploadData(String username, String password, Set<Integer> difficulties, List<CompletableFuture<Object>> tasks) throws IOException {
+    private static void fetchAndUploadData(String username, String password, Set<Integer> difficulties) {
+        for (Integer diff : difficulties) {
+            fetchAndUploadData(username, password, diff, 1);
+        }
+    }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            Iterator<Integer> iterator = difficulties.iterator();
-            if (iterator.hasNext()) {
-                Integer diff = iterator.next();
-                Request request = new Request.Builder().url("https://maimai.wahlap.com/maimai-mobile/record/musicGenre/search/?genre=99&diff=" + diff).build();
-
-                writeLog("开始获取 " + diffMap.get(diff) + " 难度的数据");
-
-                client.newCall(request).enqueue(new Callback() {
-                    @Override
-                    public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                        throw new RuntimeException(e);
-                    }
-
-                    @Override
-                    public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                        tasks.add(CompletableFuture.supplyAsync(() -> {
-                            Log.d(TAG, response.request().url() + " " + response.code());
-                            String data;
-                            try {
-                                data = Objects.requireNonNull(response.body()).string();
-                                Matcher matcher = Pattern.compile("<html.*>([\\s\\S]*)</html>").matcher(data);
-                                if (matcher.find()) data = Objects.requireNonNull(matcher.group(1));
-                                data = Pattern.compile("\\s+").matcher(data).replaceAll(" ");
-
-//                                writeLog("diff = " + diff + " was cached");
-                                writeLog(diffMap.get(diff) + " 难度的数据已获取，正在上传至水鱼查分器");
-
-                                // Upload data to maimai-prober
-                                uploadData(diff, "<login><u>" + username + "</u><p>" + password + "</p></login>" + data);
-                            } catch (IOException e) {
-                                Log.d(TAG, "fetchAndUploadData: " + diff);
-                                throw new RuntimeException(e);
-                            }
-
-                            return diff;
-                        }));
-                        difficulties.remove(diff);
-                        if (!difficulties.isEmpty()) {
-                            fetchAndUploadData(username, password, difficulties, tasks);
-                        } else {
-                            for (CompletableFuture<Object> task : tasks) {
-                                task.join();
-                            }
-                            writeLog("maimai 数据缓存完成，请等待数据上传至水鱼查分器");
-                        }
-                    }
-                });
-            }
-
-        } else {
-
-            for (int diff : difficulties) {
-                // Fetch data
-                Request request = new Request.Builder().url("https://maimai.wahlap.com/maimai-mobile/record/musicGenre/search/?genre=99&diff=" + diff).build();
-
-                Log.d("Cookie", "diff = " + diff + " start");
-
-                Call call = client.newCall(request);
-                try (Response response = call.execute()) {
-                    Log.d(TAG, response.request().url() + " " + response.code());
-                    @NonNull String data = Objects.requireNonNull(response.body()).string();
-
+    private static void fetchAndUploadData(String username, String password, Integer diff, Integer retryCount) {
+        writeLog("开始获取 " + diffMap.get(diff) + " 难度的数据");
+        Request request = new Request.Builder().url("https://maimai.wahlap.com/maimai-mobile/record/musicGenre/search/?genre=99&diff=" + diff).build();
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onResponse(@NotNull Call call, @NotNull Response response) {
+                Log.d(TAG, response.request().url() + " " + response.code());
+                String data;
+                try {
+                    data = Objects.requireNonNull(response.body()).string();
                     Matcher matcher = Pattern.compile("<html.*>([\\s\\S]*)</html>").matcher(data);
                     if (matcher.find()) data = Objects.requireNonNull(matcher.group(1));
                     data = Pattern.compile("\\s+").matcher(data).replaceAll(" ");
 
-                    writeLog("diff = " + diff + " was cached");
-
                     // Upload data to maimai-prober
-                    uploadData(diff, "<login><u>" + username + "</u><p>" + password + "</p></login>" + data);
+                    writeLog(diffMap.get(diff) + " 难度的数据已获取，正在上传至水鱼查分器");
+                    uploadData(diff, "<login><u>" + username + "</u><p>" + password + "</p></login>" + data, 1);
+                } catch (Exception e) {
+                    retryFetchAndUploadData(e, username, password, diff, retryCount);
                 }
-
             }
+
+            @Override
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                retryFetchAndUploadData(e, username, password, diff, retryCount);
+            }
+        });
+    }
+
+    private static void retryFetchAndUploadData(Exception e, String username, String password, Integer diff, Integer currentRetryCount) {
+        writeLog("获取 " + diffMap.get(diff) + " 难度数据时出现错误: " + e);
+        if (currentRetryCount < MAX_RETRY_COUNT) {
+            writeLog("进行第" + currentRetryCount.toString() + "次重试");
+            fetchAndUploadData(username, password, diff, currentRetryCount + 1);
+        }
+        else {
+            writeLog(diffMap.get(diff) + "难度数据更新失败！");
         }
     }
 
@@ -204,6 +179,7 @@ public class WechatCrawler {
 
         // Login wechat
         try {
+            writeLog("开始登录net，请稍后...");
             this.loginWechat(wechatAuthUrl);
             writeLog("登陆完成");
         } catch (Exception error) {
@@ -215,9 +191,7 @@ public class WechatCrawler {
         // Fetch maimai data
         try {
             this.fetchMaimaiData(username, password, difficulties);
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-                writeLog("maimai 数据更新完成");
-            }
+            // writeLog("maimai 数据更新完成");
         } catch (Exception error) {
             writeLog("maimai 数据更新时出现错误:");
             writeLog(error);
@@ -228,11 +202,25 @@ public class WechatCrawler {
         this.fetchChunithmData(username, password);
     }
 
+    protected String getLatestVersion() {
+        this.buildHttpClient(true);
+
+        Request request = new Request.Builder().get().url("https://maimaidx-prober-updater-android.bakapiano.com/version").build();
+
+        Call call = client.newCall(request);
+        try {
+            Response response = call.execute();
+            return response.body().string().trim();
+        }
+        catch (IOException e) {
+            return null;
+        }
+    }
+
     private void loginWechat(String wechatAuthUrl) throws Exception {
         this.buildHttpClient(true);
 
         Log.d(TAG, wechatAuthUrl);
-        writeLog("登录url:\n" + wechatAuthUrl);
 
         Request request = new Request.Builder().addHeader("Host", "tgk-wcaime.wahlap.com").addHeader("Upgrade-Insecure-Requests", "1").addHeader("User-Agent", "Mozilla/5.0 (Linux; Android 12; IN2010 Build/RKQ1.211119.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/86.0.4240.99 XWEB/4317 MMWEBSDK/20220903 Mobile Safari/537.36 MMWEBID/363 MicroMessenger/8.0.28.2240(0x28001C57) WeChat/arm64 Weixin NetType/WIFI Language/zh_CN ABI/arm64").addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/wxpic,image/tpg,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9").addHeader("X-Requested-With", "com.tencent.mm").addHeader("Sec-Fetch-Site", "none").addHeader("Sec-Fetch-Mode", "navigate").addHeader("Sec-Fetch-User", "?1").addHeader("Sec-Fetch-Dest", "document").addHeader("Accept-Encoding", "gzip, deflate").addHeader("Accept-Language", "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7").get().url(wechatAuthUrl).build();
 
@@ -242,7 +230,6 @@ public class WechatCrawler {
         try {
             String responseBody = response.body().string();
             Log.d(TAG, responseBody);
-//            writeLog(responseBody);
         } catch (NullPointerException error) {
             writeLog(error);
         }

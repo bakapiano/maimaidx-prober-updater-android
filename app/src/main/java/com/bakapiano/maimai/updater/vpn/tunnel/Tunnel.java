@@ -108,11 +108,11 @@ public abstract class Tunnel {
             if (m_InnerChannel.finishConnect()) {
                 onConnected(ByteBuffer.allocate(2048));
             } else {
-                LocalVpnService.Instance.writeLog("Error: connect to %s failed.", m_ServerEP);
+                // LocalVpnService.Instance.writeLog("Error: connect to %s failed.", m_ServerEP);
                 this.dispose();
             }
         } catch (Exception e) {
-            LocalVpnService.Instance.writeLog("Error: connect to %s failed: %s", m_ServerEP, e);
+            // LocalVpnService.Instance.writeLog("Error: connect to %s failed: %s", m_ServerEP, e);
             this.dispose();
         }
     }

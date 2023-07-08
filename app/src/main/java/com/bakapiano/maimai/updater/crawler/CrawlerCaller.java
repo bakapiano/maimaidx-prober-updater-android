@@ -20,8 +20,6 @@ public class CrawlerCaller {
         try {
             WechatCrawler crawler = new WechatCrawler();
             String url = crawler.getWechatAuthUrl();
-            writeLog("微信登录url:");
-            if (url != null) writeLog(url);
             return url;
         } catch (IOException error) {
             writeLog("获取微信登录url时出现错误:");
@@ -72,4 +70,14 @@ public class CrawlerCaller {
             }
         }).start();
     }
+
+    static public void getLastestVerision(Callback callback)
+    {
+        new Thread(() -> {
+            WechatCrawler crawler = new WechatCrawler();
+            String result = crawler.getLatestVersion();
+            callback.onResponse(result);
+        }).start();
+    }
+
 }

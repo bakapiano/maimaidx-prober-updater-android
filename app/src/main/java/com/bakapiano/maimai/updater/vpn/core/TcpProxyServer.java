@@ -134,13 +134,13 @@ public class TcpProxyServer implements Runnable {
                 }
 
             } else {
-                LocalVpnService.Instance.writeLog("Error: socket(%s:%d) target host is null.",
-                        localChannel.socket().getInetAddress().toString(), localChannel.socket().getPort());
+//                 LocalVpnService.Instance.writeLog("Error: socket(%s:%d) target host is null.",
+//                        localChannel.socket().getInetAddress().toString(), localChannel.socket().getPort());
                 localTunnel.dispose();
             }
         } catch (Exception e) {
             e.printStackTrace();
-            LocalVpnService.Instance.writeLog("Error: remote socket create failed: %s", e.toString());
+//            LocalVpnService.Instance.writeLog("Error: remote socket create failed: %s", e.toString());
             if (localTunnel != null) {
                 localTunnel.dispose();
             }

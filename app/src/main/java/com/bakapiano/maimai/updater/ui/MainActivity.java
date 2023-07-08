@@ -46,6 +46,7 @@ import java.util.Random;
 import com.bakapiano.maimai.updater.R;
 import com.bakapiano.maimai.updater.crawler.Callback;
 import com.bakapiano.maimai.updater.crawler.CrawlerCaller;
+import com.bakapiano.maimai.updater.server.HttpServer;
 import com.bakapiano.maimai.updater.server.HttpServerService;
 import com.bakapiano.maimai.updater.vpn.core.Constant;
 import com.bakapiano.maimai.updater.vpn.core.LocalVpnService;
@@ -146,33 +147,6 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    boolean isValidUrl(String url) {
-        try {
-            if (url == null || url.isEmpty())
-                return false;
-
-            if (url.startsWith("/")) {//file path
-                File file = new File(url);
-                if (!file.exists()) {
-                    onLogReceived(String.format("File(%s) not exists.", url));
-                    return false;
-                }
-                if (!file.canRead()) {
-                    onLogReceived(String.format("File(%s) can't read.", url));
-                    return false;
-                }
-            } else { //url
-                Uri uri = Uri.parse(url);
-                if (!"http".equals(uri.getScheme()) && !"https".equals(uri.getScheme()))
-                    return false;
-                return uri.getHost() != null;
-            }
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
     @SuppressLint("DefaultLocale")
     @Override
     public void onLogReceived(String logString) {
@@ -184,10 +158,6 @@ public class MainActivity extends AppCompatActivity implements
                 logString);
 
         Log.d(Constant.TAG, logString);
-
-//        if (textViewLog.getLineCount() > 200) {
-//            textViewLog.setText("");
-//        }
 
         textViewLog.append(logString);
         scrollViewLog.fullScroll(ScrollView.FOCUS_DOWN);
@@ -229,7 +199,12 @@ public class MainActivity extends AppCompatActivity implements
 //                            getAuthLink(link -> {
                             if (DataContext.CopyUrl) {
                                 String link = DataContext.WebHost;
-                                this.runOnUiThread(() -> copyText(context, link));
+                                // Use local auth server if web host is not set
+                                if (link.length() == 0) {
+                                    link = "http://127.0.0.2:" + HttpServer.Port + "/" + getRandomString(10);
+                                }
+                                String finalLink = link;
+                                this.runOnUiThread(() -> copyText(context, finalLink));
                             }
 
                             // Start vpn service
@@ -319,6 +294,44 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+            case R.id.menu_item_check_version:
+                // 检查最新版本
+                getLatestVersion(result -> {
+                    Context context = this;
+                    String latest = (String) result;
+                    String current = getVersionName().trim();
+                    if (latest != null) {
+                        if (latest.equals(current)) {
+                            this.runOnUiThread(() -> {
+                                new AlertDialog.Builder(context)
+                                        .setTitle(getString(R.string.app_name) + " " + current)
+                                        .setMessage("已经是最新版本~")
+                                        .setPositiveButton(R.string.btn_ok, null)
+                                        .show();
+                            });
+                        }
+                        else {
+                            this.runOnUiThread(() -> {
+                                new AlertDialog.Builder(context)
+                                        .setTitle(getString(R.string.app_name) + " " + current)
+                                        .setMessage("当前版本：" + current + "\n" + "最新版本：" + latest + "\n" + "是否前往网站下载最新版？")
+                                        .setPositiveButton("更新", (dialog, which) -> openWebLink("https://maimaidx-prober-updater-android.bakapiano.com/"))
+                                        .setNegativeButton("取消", null)
+                                        .show();
+                            });
+                        }
+                    }
+                    else {
+                        this.runOnUiThread(() -> {
+                            new AlertDialog.Builder(context)
+                                    .setTitle(getString(R.string.app_name) + " " + current)
+                                    .setMessage("获取最新版本号时出现错误！")
+                                    .setPositiveButton("OK", null)
+                                    .show();
+                        });
+                    }
+                });
+                return true;
             case R.id.menu_item_about:
                 new AlertDialog.Builder(this)
                         .setTitle(getString(R.string.app_name) + " " + getVersionName())
@@ -335,40 +348,43 @@ public class MainActivity extends AppCompatActivity implements
 
                 // 创建3个EditText输入框，并将其添加到LinearLayout中
                 TextView textView1 = new TextView(this);
-                textView1.setText("网页更新器地址：");
+                textView1.setText("登录链接获取地址：");
                 EditText editText1 = new EditText(this);
                 editText1.setText(DataContext.WebHost);
-                TextView textView2 = new TextView(this);
-                textView2.setText("代理地址：");
-                EditText editText2 = new EditText(this);
-                editText2.setText(DataContext.ProxyHost);
-                TextView textView3 = new TextView(this);
-                textView3.setText("代理端口：");
-                EditText editText3 = new EditText(this);
-                editText3.setText(DataContext.ProxyPort+"");
+                /*
+                    TextView textView2 = new TextView(this);
+                    textView2.setText("代理地址：");
+                    EditText editText2 = new EditText(this);
+                    editText2.setText(DataContext.ProxyHost);
+                    TextView textView3 = new TextView(this);
+                    textView3.setText("代理端口：");
+                    EditText editText3 = new EditText(this);
+                    editText3.setText(DataContext.ProxyPort+"");
+                 */
                 layout.addView(textView1);
                 layout.addView(editText1);
-                layout.addView(textView2);
-                layout.addView(editText2);
-                layout.addView(textView3);
-                layout.addView(editText3);
-
+                /*
+                    layout.addView(textView2);
+                    layout.addView(editText2);
+                    layout.addView(textView3);
+                    layout.addView(editText3);
+                */
                 builder.setView(layout);
 
                 builder.setPositiveButton("确定", (dialog, which) -> {
                     // 点击确定按钮的处理逻辑
                     String input1 = editText1.getText().toString();
-                    String input2 = editText2.getText().toString();
-                    int input3 = parseInt(editText3.getText().toString());
+                    // String input2 = editText2.getText().toString();
+                    // int input3 = parseInt(editText3.getText().toString());
 
                     DataContext.WebHost = input1;
-                    DataContext.ProxyHost = input2;
-                    DataContext.ProxyPort = input3;
+                    // DataContext.ProxyHost = input2;
+                    // DataContext.ProxyPort = input3;
 
                     mContextSp.edit()
                             .putString("webHost",input1)
-                            .putString("proxyHost",input2)
-                            .putInt("proxyPort",input3)
+                            // .putString("proxyHost",input2)
+                            // .putInt("proxyPort",input3)
                             .apply();
 
                     dialog.dismiss();
@@ -425,7 +441,6 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void showInvalidAccountDialog() {
-        Log.d(TAG, "testtest");
         this.runOnUiThread(() -> {
             new AlertDialog.Builder(this)
                     .setTitle(getString(R.string.app_name) + " " + getVersionName())
@@ -433,6 +448,13 @@ public class MainActivity extends AppCompatActivity implements
                     .setPositiveButton(R.string.btn_ok, null)
                     .show();
         });
+    }
+
+    private void openWebLink(String url) {
+        Intent intent = new Intent();
+        intent.setData(Uri.parse(url));
+        intent.setAction(Intent.ACTION_VIEW);
+        this.startActivity(intent);
     }
 
     private void getAuthLink(Callback callback) {
@@ -444,6 +466,12 @@ public class MainActivity extends AppCompatActivity implements
         }.start();
     }
 
+    private void getLatestVersion(Callback callback) {
+        CrawlerCaller.getLastestVerision(result -> {
+            String version = (String)result;
+            callback.onResponse(version);
+        });
+    }
 
     private void checkProberAccount(Callback callback) {
         DataContext.Username = ((TextView) findViewById(R.id.username)).getText().toString();
@@ -492,7 +520,7 @@ public class MainActivity extends AppCompatActivity implements
         boolean remasterEnabled = mContextSp.getBoolean("remasterEnabled", true);
 
         String proxyHost = mContextSp.getString("porxyHost","proxy.bakapiano.com");
-        String webHost = mContextSp.getString("webHost","https://maimai.bakapiano.com/shortcut?username=bakapiano666&password=114514");
+        String webHost = mContextSp.getString("webHost","");
         int proxyPort = mContextSp.getInt("porxyPort",2569);
 
 

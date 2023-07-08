@@ -12,7 +12,6 @@ import okhttp3.CookieJar;
 import okhttp3.HttpUrl;
 
 public class SimpleCookieJar implements CookieJar {
-
     private final Map<String, List<Cookie>> cookieStore = new HashMap<String, List<Cookie>>();
     private final Object lock = new Object();
 
