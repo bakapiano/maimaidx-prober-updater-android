@@ -11,6 +11,7 @@ import java.nio.channels.Selector;
 import java.util.Locale;
 
 import com.bakapiano.maimai.updater.crawler.WechatCrawler;
+import com.bakapiano.maimai.updater.ui.DataContext;
 import com.bakapiano.maimai.updater.vpn.core.Constant;
 import com.bakapiano.maimai.updater.vpn.core.ProxyConfig;
 import com.bakapiano.maimai.updater.vpn.tunnel.Tunnel;
@@ -23,7 +24,7 @@ public class HttpConnectTunnel extends Tunnel {
 
     public HttpConnectTunnel(HttpConnectConfig config, Selector selector) throws IOException {
 //        super(config.ServerAddress, selector);
-        super(new InetSocketAddress("proxy.bakapiano.com", 2569), selector);
+        super(new InetSocketAddress(DataContext.ProxyHost, DataContext.ProxyPort), selector);
         m_Config = config;
     }
 
