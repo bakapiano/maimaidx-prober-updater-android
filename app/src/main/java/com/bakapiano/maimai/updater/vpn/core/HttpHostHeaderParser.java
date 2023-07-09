@@ -105,10 +105,9 @@ public class HttpHostHeaderParser {
             }
 
             System.err.println("TLS Client Hello packet doesn't contains Host field info.");
-            return null;
         } else {
             System.err.println("Bad TLS Client Hello packet.");
-            return null;
         }
+        return null;
     }
 }

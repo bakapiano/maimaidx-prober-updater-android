@@ -2,23 +2,17 @@ package com.bakapiano.maimai.updater.crawler;
 
 import static com.bakapiano.maimai.updater.crawler.CrawlerCaller.writeLog;
 
-import android.os.Build;
-import android.support.annotation.NonNull;
 import android.util.Log;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.security.cert.CertificateException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -90,10 +84,9 @@ public class WechatCrawler {
     private static void retryUploadData(Exception e, Integer diff, String data, Integer currentRetryCount) {
         writeLog("上传 " + diffMap.get(diff) + " 分数数据至水鱼查分器时出现错误: " + e);
         if (currentRetryCount < MAX_RETRY_COUNT) {
-            writeLog("进行第" + currentRetryCount.toString() + "次重试");
+            writeLog("进行第" + currentRetryCount + "次重试");
             uploadData(diff, data, currentRetryCount + 1);
-        }
-        else {
+        } else {
             writeLog(diffMap.get(diff) + "难度数据上传失败！");
         }
     }
@@ -136,25 +129,26 @@ public class WechatCrawler {
     private static void retryFetchAndUploadData(Exception e, String username, String password, Integer diff, Integer currentRetryCount) {
         writeLog("获取 " + diffMap.get(diff) + " 难度数据时出现错误: " + e);
         if (currentRetryCount < MAX_RETRY_COUNT) {
-            writeLog("进行第" + currentRetryCount.toString() + "次重试");
+            writeLog("进行第" + currentRetryCount + "次重试");
             fetchAndUploadData(username, password, diff, currentRetryCount + 1);
-        }
-        else {
+        } else {
             writeLog(diffMap.get(diff) + "难度数据更新失败！");
         }
     }
 
     public boolean verifyProberAccount(String username, String password) throws IOException {
         String data = String.format("{\"username\" : \"%s\", \"password\" : \"%s\"}", username, password);
-        RequestBody body = RequestBody.create(JSON, data);
+        RequestBody body = RequestBody.create(data, JSON);
 
         Request request = new Request.Builder().addHeader("Host", "www.diving-fish.com").addHeader("Origin", "https://www.diving-fish.com").addHeader("Referer", "https://www.diving-fish.com/maimaidx/prober/").url("https://www.diving-fish.com/api/maimaidxprober/login").post(body).build();
 
         Call call = client.newCall(request);
-        Response response = call.execute();
-        String responseBody = response.body().string();
+        String responseBody;
+        try (Response response = call.execute()) {
+            responseBody = Objects.requireNonNull(response.body()).string();
 
-        Log.d(TAG, "Verify account: " + responseBody + response);
+            Log.d(TAG, "Verify account: " + responseBody + response);
+        }
         return !responseBody.contains("errcode");
     }
 
@@ -164,8 +158,10 @@ public class WechatCrawler {
         Request request = new Request.Builder().addHeader("Host", "tgk-wcaime.wahlap.com").addHeader("Upgrade-Insecure-Requests", "1").addHeader("User-Agent", "Mozilla/5.0 (Linux; Android 12; IN2010 Build/RKQ1.211119.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/86.0.4240.99 XWEB/4317 MMWEBSDK/20220903 Mobile Safari/537.36 MMWEBID/363 MicroMessenger/8.0.28.2240(0x28001C57) WeChat/arm64 Weixin NetType/WIFI Language/zh_CN ABI/arm64").addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/wxpic,image/tpg,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9").addHeader("X-Requested-With", "com.tencent.mm").addHeader("Sec-Fetch-Site", "none").addHeader("Sec-Fetch-Mode", "navigate").addHeader("Sec-Fetch-User", "?1").addHeader("Sec-Fetch-Dest", "document").addHeader("Accept-Encoding", "gzip, deflate").addHeader("Accept-Language", "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7").url("https://tgk-wcaime.wahlap.com/wc_auth/oauth/authorize/maimai-dx").build();
 
         Call call = client.newCall(request);
-        Response response = call.execute();
-        String url = response.request().url().toString().replace("redirect_uri=https", "redirect_uri=http");
+        String url;
+        try (Response response = call.execute()) {
+            url = response.request().url().toString().replace("redirect_uri=https", "redirect_uri=http");
+        }
 
         Log.d(TAG, "Auth url:" + url);
         return url;
@@ -208,11 +204,9 @@ public class WechatCrawler {
         Request request = new Request.Builder().get().url("https://maimaidx-prober-updater-android.bakapiano.com/version").build();
 
         Call call = client.newCall(request);
-        try {
-            Response response = call.execute();
-            return response.body().string().trim();
-        }
-        catch (IOException e) {
+        try (Response response = call.execute()) {
+            return Objects.requireNonNull(response.body()).string().trim();
+        } catch (IOException e) {
             return null;
         }
     }
@@ -228,7 +222,7 @@ public class WechatCrawler {
         Response response = call.execute();
 
         try {
-            String responseBody = response.body().string();
+            String responseBody = Objects.requireNonNull(response.body()).string();
             Log.d(TAG, responseBody);
         } catch (NullPointerException error) {
             writeLog(error);
@@ -249,7 +243,7 @@ public class WechatCrawler {
         }
     }
 
-    private void fetchMaimaiData(String username, String password, Set<Integer> difficulties) throws IOException {
+    private void fetchMaimaiData(String username, String password, Set<Integer> difficulties) {
         this.buildHttpClient(false);
         fetchAndUploadData(username, password, difficulties);
     }
@@ -314,12 +308,7 @@ public class WechatCrawler {
             // Create an ssl socket factory with our all-trusting manager
             final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
             builder.sslSocketFactory(sslSocketFactory, (X509TrustManager) trustAllCerts[0]);
-            builder.hostnameVerifier(new HostnameVerifier() {
-                @Override
-                public boolean verify(String hostname, SSLSession session) {
-                    return true;
-                }
-            });
+            builder.hostnameVerifier((hostname, session) -> true);
         } catch (Exception ignored) {
 
         }

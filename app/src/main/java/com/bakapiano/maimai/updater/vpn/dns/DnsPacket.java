@@ -78,7 +78,7 @@ public class DnsPacket {
     }
 
     public static void WriteDomain(String domain, ByteBuffer buffer) {
-        if (domain == null || domain == "") {
+        if (domain == null || domain.equals("")) {
             buffer.put((byte) 0);
             return;
         }

@@ -27,7 +27,9 @@ public class HttpConnectConfig extends Config {
 
     @Override
     public boolean equals(Object o) {
-        if (o == null)
+        if (o == this)
+            return true;
+        if (!(o instanceof HttpConnectConfig))
             return false;
         return this.toString().equals(o.toString());
     }

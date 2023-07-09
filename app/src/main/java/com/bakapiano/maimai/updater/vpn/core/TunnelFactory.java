@@ -2,19 +2,15 @@ package com.bakapiano.maimai.updater.vpn.core;
 
 import android.util.Log;
 
-import java.net.InetSocketAddress;
-import java.nio.channels.Selector;
-import java.nio.channels.SocketChannel;
-
 import com.bakapiano.maimai.updater.server.HttpRedirectServer;
-import com.bakapiano.maimai.updater.server.HttpServer;
 import com.bakapiano.maimai.updater.ui.DataContext;
-import com.bakapiano.maimai.updater.vpn.tunnel.Config;
 import com.bakapiano.maimai.updater.vpn.tunnel.HttpCapturerTunnel;
 import com.bakapiano.maimai.updater.vpn.tunnel.RawTunnel;
 import com.bakapiano.maimai.updater.vpn.tunnel.Tunnel;
-import com.bakapiano.maimai.updater.vpn.tunnel.httpconnect.HttpConnectConfig;
-import com.bakapiano.maimai.updater.vpn.tunnel.httpconnect.HttpConnectTunnel;
+
+import java.net.InetSocketAddress;
+import java.nio.channels.Selector;
+import java.nio.channels.SocketChannel;
 
 public class TunnelFactory {
     private final static String TAG = "TunnelFactory";

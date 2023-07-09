@@ -27,7 +27,7 @@ public class HttpCapturerTunnel extends Tunnel {
     }
 
     @Override
-    protected void beforeSend(ByteBuffer buffer) throws Exception {
+    protected void beforeSend(ByteBuffer buffer) {
         String body = new String(buffer.array());
         if (!body.contains("HTTP")) return;
 

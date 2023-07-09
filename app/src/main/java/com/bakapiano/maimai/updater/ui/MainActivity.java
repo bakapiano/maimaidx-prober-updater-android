@@ -4,16 +4,11 @@ import static com.bakapiano.maimai.updater.Util.copyText;
 import static com.bakapiano.maimai.updater.Util.getDifficulties;
 import static com.bakapiano.maimai.updater.crawler.CrawlerCaller.writeLog;
 
-import static java.lang.Integer.parseInt;
-
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -38,11 +33,6 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.File;
-import java.util.BitSet;
-import java.util.Calendar;
-import java.util.Random;
-
 import com.bakapiano.maimai.updater.R;
 import com.bakapiano.maimai.updater.crawler.Callback;
 import com.bakapiano.maimai.updater.crawler.CrawlerCaller;
@@ -51,6 +41,9 @@ import com.bakapiano.maimai.updater.server.HttpServerService;
 import com.bakapiano.maimai.updater.vpn.core.Constant;
 import com.bakapiano.maimai.updater.vpn.core.LocalVpnService;
 import com.bakapiano.maimai.updater.vpn.core.ProxyConfig;
+
+import java.util.Calendar;
+import java.util.Random;
 
 public class MainActivity extends AppCompatActivity implements
         OnCheckedChangeListener,
@@ -82,11 +75,11 @@ public class MainActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        scrollViewLog = (ScrollView) findViewById(R.id.scrollViewLog);
-        textViewLog = (TextView) findViewById(R.id.textViewLog);
+        scrollViewLog = findViewById(R.id.scrollViewLog);
+        textViewLog = findViewById(R.id.textViewLog);
 
         assert textViewLog != null;
         textViewLog.setText(GL_HISTORY_LOGS);
@@ -193,40 +186,38 @@ public class MainActivity extends AppCompatActivity implements
         if (LocalVpnService.IsRunning != isChecked) {
             switchProxy.setEnabled(false);
             if (isChecked) {
-                checkProberAccount(result -> {
-                    this.runOnUiThread(() -> {
-                        if ((Boolean) result) {
+                checkProberAccount(result -> this.runOnUiThread(() -> {
+                    if ((Boolean) result) {
 //                            getAuthLink(link -> {
-                            if (DataContext.CopyUrl) {
-                                String link = DataContext.WebHost;
-                                // Use local auth server if web host is not set
-                                if (link.length() == 0) {
-                                    link = "http://127.0.0.2:" + HttpServer.Port + "/" + getRandomString(10);
-                                }
-                                String finalLink = link;
-                                this.runOnUiThread(() -> copyText(context, finalLink));
+                        if (DataContext.CopyUrl) {
+                            String link = DataContext.WebHost;
+                            // Use local auth server if web host is not set
+                            if (link.length() == 0) {
+                                link = "http://127.0.0.2:" + HttpServer.Port + "/" + getRandomString(10);
                             }
-
-                            // Start vpn service
-                            Intent intent = LocalVpnService.prepare(context);
-                            if (intent == null) {
-                                startVPNService();
-                                // Jump to wechat app
-                                if (DataContext.AutoLaunch) {
-                                    getWechatApi();
-                                }
-                            } else {
-                                startActivityForResult(intent, START_VPN_SERVICE_REQUEST_CODE);
-                            }
-                            // Start http service
-                            startHttpService();
-//                            });
-                        } else {
-                            switchProxy.setChecked(false);
-                            switchProxy.setEnabled(true);
+                            String finalLink = link;
+                            this.runOnUiThread(() -> copyText(context, finalLink));
                         }
-                    });
-                });
+
+                        // Start vpn service
+                        Intent intent = LocalVpnService.prepare(context);
+                        if (intent == null) {
+                            startVPNService();
+                            // Jump to wechat app
+                            if (DataContext.AutoLaunch) {
+                                getWechatApi();
+                            }
+                        } else {
+                            startActivityForResult(intent, START_VPN_SERVICE_REQUEST_CODE);
+                        }
+                        // Start http service
+                        startHttpService();
+//                            });
+                    } else {
+                        switchProxy.setChecked(false);
+                        switchProxy.setEnabled(true);
+                    }
+                }));
             } else {
                 LocalVpnService.IsRunning = false;
                 stopHttpService();
@@ -293,64 +284,55 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.menu_item_check_version:
-                // 检查最新版本
-                getLatestVersion(result -> {
-                    Context context = this;
-                    String latest = (String) result;
-                    String current = getVersionName().trim();
-                    if (latest != null) {
-                        if (latest.equals(current)) {
-                            this.runOnUiThread(() -> {
-                                new AlertDialog.Builder(context)
-                                        .setTitle(getString(R.string.app_name) + " " + current)
-                                        .setMessage("已经是最新版本~")
-                                        .setPositiveButton(R.string.btn_ok, null)
-                                        .show();
-                            });
-                        }
-                        else {
-                            this.runOnUiThread(() -> {
-                                new AlertDialog.Builder(context)
-                                        .setTitle(getString(R.string.app_name) + " " + current)
-                                        .setMessage("当前版本：" + current + "\n" + "最新版本：" + latest + "\n" + "是否前往网站下载最新版？")
-                                        .setPositiveButton("更新", (dialog, which) -> openWebLink("https://maimaidx-prober-updater-android.bakapiano.com/"))
-                                        .setNegativeButton("取消", null)
-                                        .show();
-                            });
-                        }
+        int itemId = item.getItemId();
+        if (itemId == R.id.menu_item_check_version) {// 检查最新版本
+            getLatestVersion(result -> {
+                Context context = this;
+                String latest = (String) result;
+                String current = getVersionName().trim();
+                if (latest != null) {
+                    if (latest.equals(current)) {
+                        this.runOnUiThread(() -> new AlertDialog.Builder(context)
+                                .setTitle(getString(R.string.app_name) + " " + current)
+                                .setMessage("已经是最新版本~")
+                                .setPositiveButton(R.string.btn_ok, null)
+                                .show());
+                    } else {
+                        this.runOnUiThread(() -> new AlertDialog.Builder(context)
+                                .setTitle(getString(R.string.app_name) + " " + current)
+                                .setMessage("当前版本：" + current + "\n" + "最新版本：" + latest + "\n" + "是否前往网站下载最新版？")
+                                .setPositiveButton("更新", (dialog, which) -> openWebLink("https://maimaidx-prober-updater-android.bakapiano.com/"))
+                                .setNegativeButton("取消", null)
+                                .show());
                     }
-                    else {
-                        this.runOnUiThread(() -> {
-                            new AlertDialog.Builder(context)
-                                    .setTitle(getString(R.string.app_name) + " " + current)
-                                    .setMessage("获取最新版本号时出现错误！")
-                                    .setPositiveButton("OK", null)
-                                    .show();
-                        });
-                    }
-                });
-                return true;
-            case R.id.menu_item_about:
-                new AlertDialog.Builder(this)
-                        .setTitle(getString(R.string.app_name) + " " + getVersionName())
-                        .setMessage(R.string.about_info)
-                        .setPositiveButton(R.string.btn_ok, null)
-                        .show();
-                return true;
-            case R.id.menu_item_proxy:
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle("代理设置");
+                } else {
+                    this.runOnUiThread(() -> new AlertDialog.Builder(context)
+                            .setTitle(getString(R.string.app_name) + " " + current)
+                            .setMessage("获取最新版本号时出现错误！")
+                            .setPositiveButton("OK", null)
+                            .show());
+                }
+            });
+            return true;
+        } else if (itemId == R.id.menu_item_about) {
+            new AlertDialog.Builder(this)
+                    .setTitle(getString(R.string.app_name) + " " + getVersionName())
+                    .setMessage(R.string.about_info)
+                    .setPositiveButton(R.string.btn_ok, null)
+                    .show();
+            return true;
+        } else if (itemId == R.id.menu_item_proxy) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("代理设置");
 
-                LinearLayout layout = new LinearLayout(this);
-                layout.setOrientation(LinearLayout.VERTICAL);
+            LinearLayout layout = new LinearLayout(this);
+            layout.setOrientation(LinearLayout.VERTICAL);
 
-                // 创建3个EditText输入框，并将其添加到LinearLayout中
-                TextView textView1 = new TextView(this);
-                textView1.setText("登录链接获取地址：");
-                EditText editText1 = new EditText(this);
-                editText1.setText(DataContext.WebHost);
+            // 创建3个EditText输入框，并将其添加到LinearLayout中
+            TextView textView1 = new TextView(this);
+            textView1.setText("登录链接获取地址：");
+            EditText editText1 = new EditText(this);
+            editText1.setText(DataContext.WebHost);
                 /*
                     TextView textView2 = new TextView(this);
                     textView2.setText("代理地址：");
@@ -361,61 +343,60 @@ public class MainActivity extends AppCompatActivity implements
                     EditText editText3 = new EditText(this);
                     editText3.setText(DataContext.ProxyPort+"");
                  */
-                layout.addView(textView1);
-                layout.addView(editText1);
+            layout.addView(textView1);
+            layout.addView(editText1);
                 /*
                     layout.addView(textView2);
                     layout.addView(editText2);
                     layout.addView(textView3);
                     layout.addView(editText3);
                 */
-                builder.setView(layout);
+            builder.setView(layout);
 
-                builder.setPositiveButton("确定", (dialog, which) -> {
-                    // 点击确定按钮的处理逻辑
-                    String input1 = editText1.getText().toString();
-                    // String input2 = editText2.getText().toString();
-                    // int input3 = parseInt(editText3.getText().toString());
+            builder.setPositiveButton("确定", (dialog, which) -> {
+                // 点击确定按钮的处理逻辑
+                String input1 = editText1.getText().toString();
+                // String input2 = editText2.getText().toString();
+                // int input3 = parseInt(editText3.getText().toString());
 
-                    DataContext.WebHost = input1;
-                    // DataContext.ProxyHost = input2;
-                    // DataContext.ProxyPort = input3;
+                DataContext.WebHost = input1;
+                // DataContext.ProxyHost = input2;
+                // DataContext.ProxyPort = input3;
 
-                    mContextSp.edit()
-                            .putString("webHost",input1)
-                            // .putString("proxyHost",input2)
-                            // .putInt("proxyPort",input3)
-                            .apply();
+                mContextSp.edit()
+                        .putString("webHost", input1)
+                        // .putString("proxyHost",input2)
+                        // .putInt("proxyPort",input3)
+                        .apply();
 
-                    dialog.dismiss();
-                });
+                dialog.dismiss();
+            });
 
-                builder.setNegativeButton("取消", (dialog, which) -> dialog.dismiss());
+            builder.setNegativeButton("取消", (dialog, which) -> dialog.dismiss());
 
-                builder.setNeutralButton("恢复默认", (dialog, which) -> {
-                    String input1 = "https://maimai.bakapiano.com/shortcut?username=bakapiano666&password=114514";
-                    String input2 = "proxy.bakapiano.com";
-                    int input3 = 2569;
+            builder.setNeutralButton("恢复默认", (dialog, which) -> {
+                String input1 = "https://maimai.bakapiano.com/shortcut?username=bakapiano666&password=114514";
+                String input2 = "proxy.bakapiano.com";
+                int input3 = 2569;
 
-                    DataContext.WebHost = input1;
-                    DataContext.ProxyHost = input2;
-                    DataContext.ProxyPort = input3;
+                DataContext.WebHost = input1;
+                DataContext.ProxyHost = input2;
+                DataContext.ProxyPort = input3;
 
-                    mContextSp.edit()
-                            .putString("webHost",input1)
-                            .putString("proxyHost",input2)
-                            .putInt("proxyPort",input3)
-                            .apply();
+                mContextSp.edit()
+                        .putString("webHost", input1)
+                        .putString("proxyHost", input2)
+                        .putInt("proxyPort", input3)
+                        .apply();
 
-                    dialog.dismiss();
-                });
+                dialog.dismiss();
+            });
 
-                AlertDialog dialog = builder.create();
-                dialog.show();
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
+            AlertDialog dialog = builder.create();
+            dialog.show();
+            return true;
         }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -429,25 +410,21 @@ public class MainActivity extends AppCompatActivity implements
         checkProberAccount(result -> {
             if ((Boolean) result) {
                 saveContextData();
-                this.runOnUiThread(() -> {
-                    new AlertDialog.Builder(context)
-                            .setTitle(getString(R.string.app_name) + " " + getVersionName())
-                            .setMessage("查分器账户保存成功")
-                            .setPositiveButton(R.string.btn_ok, null)
-                            .show();
-                });
+                this.runOnUiThread(() -> new AlertDialog.Builder(context)
+                        .setTitle(getString(R.string.app_name) + " " + getVersionName())
+                        .setMessage("查分器账户保存成功")
+                        .setPositiveButton(R.string.btn_ok, null)
+                        .show());
             }
         });
     }
 
     private void showInvalidAccountDialog() {
-        this.runOnUiThread(() -> {
-            new AlertDialog.Builder(this)
-                    .setTitle(getString(R.string.app_name) + " " + getVersionName())
-                    .setMessage("查分账户信息无效")
-                    .setPositiveButton(R.string.btn_ok, null)
-                    .show();
-        });
+        this.runOnUiThread(() -> new AlertDialog.Builder(this)
+                .setTitle(getString(R.string.app_name) + " " + getVersionName())
+                .setMessage("查分账户信息无效")
+                .setPositiveButton(R.string.btn_ok, null)
+                .show());
     }
 
     private void openWebLink(String url) {

@@ -5,7 +5,6 @@ import static com.bakapiano.maimai.updater.ui.DataContext.HookHost;
 import android.util.Log;
 
 import com.bakapiano.maimai.updater.crawler.CrawlerCaller;
-import com.bakapiano.maimai.updater.crawler.WechatCrawler;
 
 import java.io.IOException;
 

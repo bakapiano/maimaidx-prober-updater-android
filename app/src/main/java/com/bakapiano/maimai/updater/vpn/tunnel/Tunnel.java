@@ -3,16 +3,16 @@ package com.bakapiano.maimai.updater.vpn.tunnel;
 import android.annotation.SuppressLint;
 import android.util.Log;
 
+import com.bakapiano.maimai.updater.vpn.core.Constant;
+import com.bakapiano.maimai.updater.vpn.core.LocalVpnService;
+import com.bakapiano.maimai.updater.vpn.core.ProxyConfig;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-
-import com.bakapiano.maimai.updater.vpn.core.Constant;
-import com.bakapiano.maimai.updater.vpn.core.LocalVpnService;
-import com.bakapiano.maimai.updater.vpn.core.ProxyConfig;
 
 public abstract class Tunnel {
 
@@ -163,13 +163,10 @@ public abstract class Tunnel {
     }
 
     void disposeInternal(boolean disposeBrother) {
-        if (m_Disposed) {
-            return;
-        } else {
+        if (!m_Disposed) {
             try {
                 m_InnerChannel.close();
-            } catch (Exception e) {
-            }
+            } catch (Exception ignored) { }
 
             if (m_BrotherTunnel != null && disposeBrother) {
                 m_BrotherTunnel.disposeInternal(false);

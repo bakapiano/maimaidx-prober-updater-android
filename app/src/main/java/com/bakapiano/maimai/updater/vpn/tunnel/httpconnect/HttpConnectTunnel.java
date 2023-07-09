@@ -1,20 +1,17 @@
 package com.bakapiano.maimai.updater.vpn.tunnel.httpconnect;
 
-import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
+
+import com.bakapiano.maimai.updater.ui.DataContext;
+import com.bakapiano.maimai.updater.vpn.core.ProxyConfig;
+import com.bakapiano.maimai.updater.vpn.tunnel.Tunnel;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.Selector;
 import java.util.Locale;
-
-import com.bakapiano.maimai.updater.crawler.WechatCrawler;
-import com.bakapiano.maimai.updater.ui.DataContext;
-import com.bakapiano.maimai.updater.vpn.core.Constant;
-import com.bakapiano.maimai.updater.vpn.core.ProxyConfig;
-import com.bakapiano.maimai.updater.vpn.tunnel.Tunnel;
 
 public class HttpConnectTunnel extends Tunnel {
     private static final String TAG = "HttpConnectTunnel";
@@ -108,7 +105,7 @@ public class HttpConnectTunnel extends Tunnel {
     }
 
     @Override
-    protected void beforeSend(ByteBuffer buffer) throws Exception {
+    protected void beforeSend(ByteBuffer buffer) {
 
     }
 

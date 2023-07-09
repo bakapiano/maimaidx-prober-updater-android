@@ -29,18 +29,16 @@ public class CommonMethods {
 
     public static int ipStringToInt(String ip) {
         String[] arrStrings = ip.split("\\.");
-        int r = (Integer.parseInt(arrStrings[0]) << 24)
+        return (Integer.parseInt(arrStrings[0]) << 24)
                 | (Integer.parseInt(arrStrings[1]) << 16)
                 | (Integer.parseInt(arrStrings[2]) << 8)
                 | Integer.parseInt(arrStrings[3]);
-        return r;
     }
 
     public static int readInt(byte[] data, int offset) {
-        int r = ((data[offset] & 0xFF) << 24)
+        return ((data[offset] & 0xFF) << 24)
                 | ((data[offset + 1] & 0xFF) << 16)
                 | ((data[offset + 2] & 0xFF) << 8) | (data[offset + 3] & 0xFF);
-        return r;
     }
 
     public static short readShort(byte[] data, int offset) {

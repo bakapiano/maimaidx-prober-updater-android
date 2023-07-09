@@ -16,25 +16,23 @@ import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.bakapiano.maimai.updater.R;
+import com.bakapiano.maimai.updater.ui.MainActivity;
 import com.bakapiano.maimai.updater.vpn.core.ProxyConfig.IPAddress;
 import com.bakapiano.maimai.updater.vpn.dns.DnsPacket;
 import com.bakapiano.maimai.updater.vpn.tcpip.CommonMethods;
 import com.bakapiano.maimai.updater.vpn.tcpip.IPHeader;
 import com.bakapiano.maimai.updater.vpn.tcpip.TCPHeader;
 import com.bakapiano.maimai.updater.vpn.tcpip.UDPHeader;
-import com.bakapiano.maimai.updater.ui.MainActivity;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class LocalVpnService extends VpnService implements Runnable {
 
@@ -47,7 +45,7 @@ public class LocalVpnService extends VpnService implements Runnable {
 
     private static int ID;
     private static int LOCAL_IP;
-    private static ConcurrentHashMap<onStatusChangedListener, Object> m_OnStatusChangedListeners = new ConcurrentHashMap<onStatusChangedListener, Object>();
+    private static final ConcurrentHashMap<onStatusChangedListener, Object> m_OnStatusChangedListeners = new ConcurrentHashMap<>();
 
     private Thread m_VPNThread;
     private ParcelFileDescriptor m_VPNInterface;
@@ -55,12 +53,12 @@ public class LocalVpnService extends VpnService implements Runnable {
     private DnsProxy m_DnsProxy;
     private FileOutputStream m_VPNOutputStream;
 
-    private byte[] m_Packet;
-    private IPHeader m_IPHeader;
-    private TCPHeader m_TCPHeader;
-    private UDPHeader m_UDPHeader;
-    private ByteBuffer m_DNSBuffer;
-    private Handler m_Handler;
+    private final byte[] m_Packet;
+    private final IPHeader m_IPHeader;
+    private final TCPHeader m_TCPHeader;
+    private final UDPHeader m_UDPHeader;
+    private final ByteBuffer m_DNSBuffer;
+    private final Handler m_Handler;
     private long m_SentBytes;
     private long m_ReceivedBytes;
     private String[] m_Blacklist;
@@ -85,9 +83,7 @@ public class LocalVpnService extends VpnService implements Runnable {
     }
 
     public static void removeOnStatusChangedListener(onStatusChangedListener listener) {
-        if (m_OnStatusChangedListeners.containsKey(listener)) {
-            m_OnStatusChangedListeners.remove(listener);
-        }
+        m_OnStatusChangedListeners.remove(listener);
     }
 
     @Override
@@ -127,24 +123,18 @@ public class LocalVpnService extends VpnService implements Runnable {
     }
 
     private void onStatusChanged(final String status, final boolean isRunning) {
-        m_Handler.post(new Runnable() {
-            @Override
-            public void run() {
-                for (Map.Entry<onStatusChangedListener, Object> entry : m_OnStatusChangedListeners.entrySet()) {
-                    entry.getKey().onStatusChanged(status, isRunning);
-                }
+        m_Handler.post(() -> {
+            for (Map.Entry<onStatusChangedListener, Object> entry : m_OnStatusChangedListeners.entrySet()) {
+                entry.getKey().onStatusChanged(status, isRunning);
             }
         });
     }
 
     public void writeLog(final String format, Object... args) {
         final String logString = String.format(format, args);
-        m_Handler.post(new Runnable() {
-            @Override
-            public void run() {
-                for (Map.Entry<onStatusChangedListener, Object> entry : m_OnStatusChangedListeners.entrySet()) {
-                    entry.getKey().onLogReceived(logString);
-                }
+        m_Handler.post(() -> {
+            for (Map.Entry<onStatusChangedListener, Object> entry : m_OnStatusChangedListeners.entrySet()) {
+                entry.getKey().onLogReceived(logString);
             }
         });
     }
@@ -165,7 +155,7 @@ public class LocalVpnService extends VpnService implements Runnable {
             appInstallID = UUID.randomUUID().toString();
             Editor editor = preferences.edit();
             editor.putString("AppInstallID", appInstallID);
-            editor.commit();
+            editor.apply();
         }
         return appInstallID;
     }
@@ -213,8 +203,7 @@ public class LocalVpnService extends VpnService implements Runnable {
     private void runVPN() throws Exception {
         this.m_VPNInterface = establishVPN();
         this.m_VPNOutputStream = new FileOutputStream(m_VPNInterface.getFileDescriptor());
-        FileInputStream in = new FileInputStream(m_VPNInterface.getFileDescriptor());
-        try {
+        try (FileInputStream in = new FileInputStream(m_VPNInterface.getFileDescriptor())) {
             while (IsRunning) {
                 boolean idle = true;
                 int size = in.read(m_Packet);
@@ -234,8 +223,6 @@ public class LocalVpnService extends VpnService implements Runnable {
                     Thread.sleep(100);
                 }
             }
-        } finally {
-            in.close();
         }
     }
 
@@ -258,8 +245,8 @@ public class LocalVpnService extends VpnService implements Runnable {
                         } else {
                             if (ProxyConfig.IS_DEBUG)
                                 Log.d(TAG, "NoSession: " +
-                                        ipHeader.toString() + " " +
-                                        tcpHeader.toString());
+                                        ipHeader + " " +
+                                        tcpHeader);
                         }
                     } else {
                         int portKey = tcpHeader.getSourcePort();
@@ -320,7 +307,7 @@ public class LocalVpnService extends VpnService implements Runnable {
         }
     }
 
-    private ParcelFileDescriptor establishVPN() throws Exception {
+    private ParcelFileDescriptor establishVPN() {
 
         NatSessionManager.clearAllSessions();
 
