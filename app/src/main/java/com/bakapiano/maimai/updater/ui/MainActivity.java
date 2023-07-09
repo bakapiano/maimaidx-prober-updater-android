@@ -41,6 +41,7 @@ import java.util.Random;
 import com.bakapiano.maimai.updater.R;
 import com.bakapiano.maimai.updater.crawler.Callback;
 import com.bakapiano.maimai.updater.crawler.CrawlerCaller;
+import com.bakapiano.maimai.updater.notification.NotificationUtil;
 import com.bakapiano.maimai.updater.server.HttpServer;
 import com.bakapiano.maimai.updater.server.HttpServerService;
 import com.bakapiano.maimai.updater.vpn.core.Constant;
@@ -185,6 +186,7 @@ public class MainActivity extends AppCompatActivity implements
         if (LocalVpnService.IsRunning != isChecked) {
             switchProxy.setEnabled(false);
             if (isChecked) {
+                NotificationUtil.getINSTANCE().setContext(this).startNotification();
                 checkProberAccount(result -> {
                     this.runOnUiThread(() -> {
                         if ((Boolean) result) {
