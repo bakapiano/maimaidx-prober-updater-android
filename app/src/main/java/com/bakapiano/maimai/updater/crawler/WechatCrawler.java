@@ -2,17 +2,15 @@ package com.bakapiano.maimai.updater.crawler;
 
 import static com.bakapiano.maimai.updater.crawler.CrawlerCaller.writeLog;
 
-import android.os.Build;
 import android.util.Log;
 
-import org.jetbrains.annotations.NotNull;
+import com.bakapiano.maimai.updater.notification.NotificationUtil;
 
 import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -30,7 +28,6 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import okhttp3.Call;
-import okhttp3.Callback;
 import okhttp3.ConnectionSpec;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
@@ -193,6 +190,7 @@ public class WechatCrawler {
 
         // TODO: Fetch chuithm data
         // this.fetchChunithmData(username, password);
+        NotificationUtil.getINSTANCE().stopNotification();
     }
 
     protected String getLatestVersion() {
