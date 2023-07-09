@@ -9,11 +9,8 @@ import static java.lang.Integer.parseInt;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -38,8 +35,6 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.File;
-import java.util.BitSet;
 import java.util.Calendar;
 import java.util.Random;
 
@@ -85,13 +80,11 @@ public class MainActivity extends AppCompatActivity implements
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        scrollViewLog = (ScrollView) findViewById(R.id.scrollViewLog);
         textViewLog = (TextView) findViewById(R.id.textViewLog);
 
         assert textViewLog != null;
         textViewLog.setText(GL_HISTORY_LOGS);
         textViewLog.setMovementMethod(ScrollingMovementMethod.getInstance());
-        scrollViewLog.fullScroll(ScrollView.FOCUS_DOWN);
 
         mCalendar = Calendar.getInstance();
         LocalVpnService.addOnStatusChangedListener(this);
@@ -160,7 +153,6 @@ public class MainActivity extends AppCompatActivity implements
         Log.d(Constant.TAG, logString);
 
         textViewLog.append(logString);
-        scrollViewLog.fullScroll(ScrollView.FOCUS_DOWN);
         GL_HISTORY_LOGS = textViewLog.getText() == null ? "" : textViewLog.getText().toString();
     }
 
@@ -467,7 +459,7 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void getLatestVersion(Callback callback) {
-        CrawlerCaller.getLastestVerision(result -> {
+        CrawlerCaller.getLatestVersion(result -> {
             String version = (String)result;
             callback.onResponse(version);
         });

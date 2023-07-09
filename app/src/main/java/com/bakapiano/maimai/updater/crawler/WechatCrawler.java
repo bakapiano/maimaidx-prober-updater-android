@@ -3,7 +3,6 @@ package com.bakapiano.maimai.updater.crawler;
 import static com.bakapiano.maimai.updater.crawler.CrawlerCaller.writeLog;
 
 import android.os.Build;
-import android.support.annotation.NonNull;
 import android.util.Log;
 
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +58,7 @@ public class WechatCrawler {
 
     private static OkHttpClient client = null;
 
-    protected WechatCrawler() {
+    public WechatCrawler() {
         diffMap.put(0, "Basic");
         diffMap.put(1, "Advance");
         diffMap.put(2, "Expert");
@@ -70,21 +69,17 @@ public class WechatCrawler {
 
     private static void uploadData(Integer diff, String data, Integer retryCount) {
         Request request = new Request.Builder().url("https://www.diving-fish.com/api/pageparser/page").addHeader("content-type", "text/plain").post(RequestBody.create(data, TEXT)).build();
-        Callback callback = new Callback() {
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                retryUploadData(e, diff, data, retryCount);
-            }
 
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                assert response.body() != null;
-                String result = response.body().string();
-                Log.d(TAG, result);
-                writeLog(diffMap.get(diff) + " 难度数据上传完成：" + result);
-            }
-        };
-        client.newCall(request).enqueue(callback);
+        Call call = client.newCall((request));
+
+        try {
+            Response response = call.execute();
+            String result = response.body().string();
+            writeLog(diffMap.get(diff) + " 难度数据上传完成：" + result);
+        }
+        catch (Exception e) {
+            retryUploadData(e, diff, data, retryCount);
+        }
     }
 
     private static void retryUploadData(Exception e, Integer diff, String data, Integer currentRetryCount) {
@@ -99,38 +94,36 @@ public class WechatCrawler {
     }
 
     private static void fetchAndUploadData(String username, String password, Set<Integer> difficulties) {
+        List<CompletableFuture<Object>> tasks = new ArrayList<>();
         for (Integer diff : difficulties) {
-            fetchAndUploadData(username, password, diff, 1);
+            tasks.add(CompletableFuture.supplyAsync(() -> {
+                fetchAndUploadData(username, password, diff, 1);
+                return null;
+            }));
+        }
+        for (CompletableFuture<Object> task: tasks) {
+            task.join();
         }
     }
 
     private static void fetchAndUploadData(String username, String password, Integer diff, Integer retryCount) {
         writeLog("开始获取 " + diffMap.get(diff) + " 难度的数据");
         Request request = new Request.Builder().url("https://maimai.wahlap.com/maimai-mobile/record/musicGenre/search/?genre=99&diff=" + diff).build();
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) {
-                Log.d(TAG, response.request().url() + " " + response.code());
-                String data;
-                try {
-                    data = Objects.requireNonNull(response.body()).string();
-                    Matcher matcher = Pattern.compile("<html.*>([\\s\\S]*)</html>").matcher(data);
-                    if (matcher.find()) data = Objects.requireNonNull(matcher.group(1));
-                    data = Pattern.compile("\\s+").matcher(data).replaceAll(" ");
 
-                    // Upload data to maimai-prober
-                    writeLog(diffMap.get(diff) + " 难度的数据已获取，正在上传至水鱼查分器");
-                    uploadData(diff, "<login><u>" + username + "</u><p>" + password + "</p></login>" + data, 1);
-                } catch (Exception e) {
-                    retryFetchAndUploadData(e, username, password, diff, retryCount);
-                }
-            }
+        Call call = client.newCall(request);
+        try {
+            Response response = call.execute();
+            String data = Objects.requireNonNull(response.body()).string();
+            Matcher matcher = Pattern.compile("<html.*>([\\s\\S]*)</html>").matcher(data);
+            if (matcher.find()) data = Objects.requireNonNull(matcher.group(1));
+            data = Pattern.compile("\\s+").matcher(data).replaceAll(" ");
 
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                retryFetchAndUploadData(e, username, password, diff, retryCount);
-            }
-        });
+            // Upload data to maimai-prober
+            writeLog(diffMap.get(diff) + " 难度的数据已获取，正在上传至水鱼查分器");
+            uploadData(diff, "<login><u>" + username + "</u><p>" + password + "</p></login>" + data, 1);
+        } catch (Exception e) {
+            retryFetchAndUploadData(e, username, password, diff, retryCount);
+        }
     }
 
     private static void retryFetchAndUploadData(Exception e, String username, String password, Integer diff, Integer currentRetryCount) {
@@ -171,7 +164,7 @@ public class WechatCrawler {
         return url;
     }
 
-    protected void fetchAndUploadData(String username, String password, Set<Integer> difficulties, String wechatAuthUrl) throws IOException {
+    public void fetchAndUploadData(String username, String password, Set<Integer> difficulties, String wechatAuthUrl) throws IOException {
         if (wechatAuthUrl.startsWith("http"))
             wechatAuthUrl = wechatAuthUrl.replaceFirst("http", "https");
 
@@ -191,15 +184,15 @@ public class WechatCrawler {
         // Fetch maimai data
         try {
             this.fetchMaimaiData(username, password, difficulties);
-            // writeLog("maimai 数据更新完成");
+            writeLog("maimai 数据更新完成");
         } catch (Exception error) {
             writeLog("maimai 数据更新时出现错误:");
             writeLog(error);
             return;
         }
 
-        // Fetch chuithm data
-        this.fetchChunithmData(username, password);
+        // TODO: Fetch chuithm data
+        // this.fetchChunithmData(username, password);
     }
 
     protected String getLatestVersion() {

@@ -20,4 +20,6 @@
     <string name="config_url_hint">URL or local file path</string>
     <string name="connected">Connected</string>
     <string name="disconnected">Disconnected</string>
+    <string name="username">查分器账号</string>
+    <string name="password">查分器密码</string>
 </resources>

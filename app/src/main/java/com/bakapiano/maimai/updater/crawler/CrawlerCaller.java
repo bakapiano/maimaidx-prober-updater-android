@@ -71,7 +71,7 @@ public class CrawlerCaller {
         }).start();
     }
 
-    static public void getLastestVerision(Callback callback)
+    static public void getLatestVersion(Callback callback)
     {
         new Thread(() -> {
             WechatCrawler crawler = new WechatCrawler();
