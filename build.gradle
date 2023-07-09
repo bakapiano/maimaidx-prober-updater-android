@@ -8,7 +8,7 @@ buildscript {
         support_version = '28.0.0'
         kotlin_version = '1.3.50'
         anko_version = '0.10.4'
-        junit_version = '4.12'
+        junit_version = '4.13.2'
         slf4j_version = '1.7.25'
         constraint_layout_version = '1.0.2'
     }
@@ -26,7 +26,7 @@ buildscript {
 
 allprojects {
     repositories {
-        jcenter()
+        mavenCentral()
         google()
     }
 }

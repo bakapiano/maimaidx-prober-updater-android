@@ -1,6 +1,6 @@
 package com.bakapiano.maimai.updater;
 
-import static android.support.v4.content.ContextCompat.getSystemService;
+import static androidx.core.content.ContextCompat.getSystemService;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
