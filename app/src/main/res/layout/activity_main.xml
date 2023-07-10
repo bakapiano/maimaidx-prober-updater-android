@@ -1,152 +1,247 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="#2196F3"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-        app:cardElevation="4dp"
-        app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
-
-    <EditText
-        android:id="@+id/username"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ems="10"
-        android:hint="Username"
-        android:inputType="textPersonName" />
-
-    <ScrollView
-        android:id="@+id/scrollViewLog"
-        android:layout_width="wrap_content"
         android:layout_height="wrap_content">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/md_theme_onPrimary"
+            android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar"
+            app:cardElevation="4dp"
+            app:popupTheme="@style/ThemeOverlay.MaterialComponents.Light"
+            app:title="Disconnected"
+            android:focusable="true"/>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingBottom="100dp"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:orientation="vertical">
 
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/username"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/username"
+                android:inputType="textPersonName">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="24dp"
+                    android:layout_marginEnd="24dp"
+                    android:textColorHint="#757575"
+                    tools:ignore="TextContrastCheck" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+
+            <ScrollView
+                android:id="@+id/scrollViewLog"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+            </ScrollView>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/password"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:autofillHints="password"
+                android:hint="@string/password">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="24dp"
+                    android:layout_marginEnd="24dp"
+                    android:inputType="textPassword"
+                    android:textColorHint="#757575"
+                    tools:ignore="TextContrastCheck" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButtonToggleGroup
+                    android:id="@+id/difficulty_toggle_group"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="24dp"
+                    android:layout_marginEnd="24dp"
+                    app:singleSelection="false">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/basic"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:checked="false"
+                        android:text="@string/basic"
+                        android:textAllCaps="false"
+                        android:textSize="12sp"
+                        app:cornerRadius="8dp"
+                        tools:ignore="TextContrastCheck,TextContrastCheck" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/advanced"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:checked="false"
+                        android:text="@string/advanced"
+                        android:textAllCaps="false"
+                        android:textSize="12sp"
+                        app:cornerRadius="8dp"
+                        tools:ignore="TextContrastCheck,TextContrastCheck" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/expert"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:checked="true"
+                        android:text="@string/expert"
+                        android:textAllCaps="false"
+                        android:textSize="12sp"
+                        app:cornerRadius="8dp"
+                        tools:ignore="TextContrastCheck" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/master"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:checked="true"
+                        android:text="@string/master"
+                        android:textAllCaps="false"
+                        android:textSize="12sp"
+                        app:cornerRadius="8dp"
+                        tools:ignore="TextContrastCheck" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/remaster"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:checked="true"
+                        android:text="@string/re_mas"
+                        android:textAllCaps="false"
+                        android:textSize="12sp"
+                        app:cornerRadius="8dp"
+                        tools:ignore="TextContrastCheck" />
+                </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButtonToggleGroup
+                    android:id="@+id/options_toggle_group"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp"
+                    app:checkedButton="@id/expert"
+                    app:singleSelection="false">
+
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/copyUrl"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:checked="false"
+                        android:text="@string/copy_url"
+                        android:textAllCaps="false"
+                        android:textSize="12sp"
+                        app:cornerRadius="8dp"
+                        tools:ignore="TextContrastCheck" />
+
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/autoLaunch"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:checked="false"
+                        android:text="@string/auto_launch"
+                        android:textAllCaps="false"
+                        android:textSize="12sp"
+                        app:cornerRadius="8dp"
+                        tools:ignore="TextContrastCheck" />
+
+                </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:onClick="saveText"
+                android:text="@string/save" />
+
+            <TextView
+                android:id="@+id/textViewLog"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fadeScrollbars="false"
+                android:padding="13dp"
+                android:scrollbarStyle="outsideInset"
+                android:scrollbars="vertical"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:textColor="?android:attr/textColorPrimary" />
+
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
-    <EditText
-        android:id="@+id/password"
+    <com.google.android.material.bottomappbar.BottomAppBar
+        android:id="@+id/bottomAppBar"
+        style="@style/Widget.Material3.BottomAppBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:autofillHints="password"
-        android:ems="10"
-        android:hint="Password"
-        android:inputType="textPassword" />
+        android:layout_gravity="bottom"
+        app:menu="@menu/bottom_app_bar"
+        app:navigationIcon="@drawable/baseline_menu_24" />
 
-    <LinearLayout
-        android:layout_width="match_parent"
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/action_button"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <Space
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1" />
-
-        <Switch
-            android:id="@+id/copyUrl"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:checked="true"
-            android:text="复制链接" />
-
-        <Space
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1" />
-
-        <Switch
-            android:id="@+id/autoLaunch"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="0.75"
-            android:checked="true"
-            android:text="自动打开微信" />
-
-        <Space
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <CheckBox
-            android:id="@+id/basic"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:checked="false"
-            android:text="Basic"
-            android:textSize="12sp" />
-
-        <CheckBox
-            android:id="@+id/advanced"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:checked="false"
-            android:text="Advanced"
-            android:textSize="12sp" />
-
-        <CheckBox
-            android:id="@+id/expert"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:checked="true"
-            android:text="Expert"
-            android:textSize="12sp" />
-
-        <CheckBox
-            android:id="@+id/master"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:checked="true"
-            android:text="Master"
-            android:textSize="12sp" />
-
-        <CheckBox
-            android:id="@+id/remaster"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:checked="true"
-            android:text="Re:Mas"
-            android:textSize="12sp" />
-    </LinearLayout>
-
-    <Button
-        android:id="@+id/button"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:onClick="saveText"
-        android:text="Save" />
-
-    <TextView
-        android:id="@+id/textViewLog"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fadeScrollbars="false"
-        android:padding="13dp"
-        android:scrollbarStyle="outsideInset"
-        android:scrollbars="vertical"
-        android:textAppearance="?android:attr/textAppearanceSmall" />
-
-</LinearLayout>
+        android:contentDescription="@string/start"
+        app:layout_anchor="@id/bottomAppBar"
+        app:srcCompat="@drawable/baseline_upload_24" />
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

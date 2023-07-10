@@ -10,6 +10,11 @@ android {
         versionCode 1
         versionName "2.0"
     }
+
+    buildFeatures {
+        viewBinding = true
+    }
+
     // debug和release使用相同签名，以便用debug包覆盖release包从而调试，
     // 如果没有，就会使用默认debug签名，
     def signingFile = rootProject.file('key.properties')
@@ -77,8 +82,10 @@ android {
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.cardview:cardview:1.0.0'
+    implementation 'androidx.coordinatorlayout:coordinatorlayout:1.2.0'
     testImplementation "junit:junit:$junit_version"
     implementation 'com.squareup.okhttp3:okhttp:4.10.0'
     implementation 'net.ripe.commons:commons-ip-math:1.22'
     implementation 'org.nanohttpd:nanohttpd:2.2.0'
+    implementation 'com.google.android.material:material:1.9.0'
 }

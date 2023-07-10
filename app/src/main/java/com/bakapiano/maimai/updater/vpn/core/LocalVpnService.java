@@ -61,7 +61,7 @@ public class LocalVpnService extends VpnService implements Runnable {
     private final Handler m_Handler;
     private long m_SentBytes;
     private long m_ReceivedBytes;
-    private String[] m_Blacklist;
+    private String[] m_Blacklist = {};
 
     public LocalVpnService() {
         ID++;
@@ -320,10 +320,6 @@ public class LocalVpnService extends VpnService implements Runnable {
         builder.addAddress(ipAddress.Address, ipAddress.PrefixLength);
         if (ProxyConfig.IS_DEBUG)
             Log.d(TAG, String.format("addAddress: %s/%d\n", ipAddress.Address, ipAddress.PrefixLength));
-
-        if (m_Blacklist == null) {
-            m_Blacklist = getResources().getStringArray(R.array.black_list);
-        }
 
         ProxyConfig.Instance.resetDomain(m_Blacklist);
 

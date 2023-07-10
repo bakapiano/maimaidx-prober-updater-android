@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/maimai_dx"
+        android:icon="@drawable/maimai"
+        android:title="@string/maimai_dx"
+        android:contentDescription="@string/maimai_dx"
+        app:showAsAction="ifRoom"/>
+
+    <item
+        android:id="@+id/chunithm"
+        android:icon="@drawable/chuni"
+        android:title="@string/chunithm"
+        android:contentDescription="@string/chunithm"
+        app:showAsAction="ifRoom"/>
+</menu>

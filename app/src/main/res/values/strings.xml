@@ -20,4 +20,17 @@
     <string name="config_url_hint">URL or local file path</string>
     <string name="connected">Connected</string>
     <string name="disconnected">Disconnected</string>
+    <string name="username">Username</string>
+    <string name="basic">Basic</string>
+    <string name="password">Password</string>
+    <string name="copy_url">复制链接</string>
+    <string name="auto_launch">自动打开微信</string>
+    <string name="advanced">Advanced</string>
+    <string name="expert">Expert</string>
+    <string name="master">Master</string>
+    <string name="re_mas">Re:Mas</string>
+    <string name="save">Save</string>
+    <string name="start">start</string>
+    <string name="chunithm">Chunithm</string>
+    <string name="maimai_dx">maimai DX</string>
 </resources>

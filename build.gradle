@@ -2,7 +2,7 @@
 
 buildscript {
     ext {
-        compile_version = 29
+        compile_version = 33
         min_version = 24
         target_version = 27
         support_version = '28.0.0'

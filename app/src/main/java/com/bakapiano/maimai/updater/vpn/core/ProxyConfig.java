@@ -3,15 +3,15 @@ package com.bakapiano.maimai.updater.vpn.core;
 import android.annotation.SuppressLint;
 import android.content.Context;
 
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Locale;
-
 import com.bakapiano.maimai.updater.BuildConfig;
 import com.bakapiano.maimai.updater.vpn.tcpip.CommonMethods;
 import com.bakapiano.maimai.updater.vpn.tunnel.Config;
 import com.bakapiano.maimai.updater.vpn.tunnel.httpconnect.HttpConnectConfig;
+
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Locale;
 
 public class ProxyConfig {
     public static final ProxyConfig Instance = new ProxyConfig();
@@ -34,10 +34,10 @@ public class ProxyConfig {
 
 
     public ProxyConfig() {
-        m_IpList = new ArrayList<IPAddress>();
-        m_DnsList = new ArrayList<IPAddress>();
-        m_ProxyList = new ArrayList<Config>();
-        m_DomainMap = new HashMap<String, Boolean>();
+        m_IpList = new ArrayList<>();
+        m_DnsList = new ArrayList<>();
+        m_ProxyList = new ArrayList<>();
+        m_DomainMap = new HashMap<>();
 
         m_IpList.add(new IPAddress("26.26.26.2", 32));
         m_DnsList.add(new IPAddress("119.29.29.29"));
