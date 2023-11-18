@@ -35,6 +35,7 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.util.Calendar;
 import java.util.Random;
 
@@ -562,6 +563,14 @@ public class MainActivity extends AppCompatActivity implements
         editor.putBoolean("expertEnabled", DataContext.ExpertEnabled);
         editor.putBoolean("masterEnabled", DataContext.MasterEnabled);
         editor.putBoolean("remasterEnabled", DataContext.RemasterEnabled);
+    }
+
+    private void getWeChatApiForSU(String link) {
+        try {
+            Runtime.getRuntime().exec("su -c am start -n com.tencent.mm/com.tencent.mm.plugin.webview.ui.tools.MMWebViewUI --es rawUrl " + link);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static void saveOptionsContextData(SharedPreferences.Editor editor) {
