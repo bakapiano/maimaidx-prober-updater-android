@@ -211,7 +211,7 @@ public class WechatCrawler {
     }
 
     private void loginWechat(String wechatAuthUrl) throws Exception {
-        this.buildHttpClient(true);
+        this.buildHttpClient(false);
 
         Log.d(TAG, wechatAuthUrl);
 
@@ -229,16 +229,21 @@ public class WechatCrawler {
 
         int code = response.code();
         writeLog(String.valueOf(code));
-        if (code >= 400) {
-            throw new Exception("登陆时出现错误，请重试！");
+
+        // Handle redirect manually to preserve User-Agent across domains
+        String location = response.headers().get("Location");
+        int maxRedirects = 10;
+        while (code >= 300 && code < 400 && location != null && maxRedirects-- > 0) {
+            response.close();
+            request = new Request.Builder().addHeader("User-Agent", WECHAT_USER_AGENT).url(location).get().build();
+            call = client.newCall(request);
+            response = call.execute();
+            code = response.code();
+            location = response.headers().get("Location");
         }
 
-        // Handle redirect manually
-        String location = response.headers().get("Location");
-        if (response.code() >= 300 && response.code() < 400 && location != null) {
-            request = new Request.Builder().url(location).get().build();
-            call = client.newCall(request);
-            call.execute().close();
+        if (code >= 400) {
+            throw new Exception("登陆时出现错误 (HTTP " + code + ")，请重试！");
         }
     }
 
