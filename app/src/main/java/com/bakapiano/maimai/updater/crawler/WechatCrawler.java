@@ -45,6 +45,8 @@ public class WechatCrawler {
 
     private static final String TAG = "Crawler";
 
+    private static final String WECHAT_USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36 NetType/WIFI MicroMessenger/7.0.20.1781(0x6700143B) WindowsWechat(0x6307001e)";
+
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 
     private static final MediaType TEXT = MediaType.parse("text/plain");
@@ -151,7 +153,7 @@ public class WechatCrawler {
     protected String getWechatAuthUrl() throws IOException {
         this.buildHttpClient(true);
 
-        Request request = new Request.Builder().addHeader("Host", "tgk-wcaime.wahlap.com").addHeader("Upgrade-Insecure-Requests", "1").addHeader("User-Agent", "Mozilla/5.0 (Linux; Android 12; IN2010 Build/RKQ1.211119.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/86.0.4240.99 XWEB/4317 MMWEBSDK/20220903 Mobile Safari/537.36 MMWEBID/363 MicroMessenger/8.0.28.2240(0x28001C57) WeChat/arm64 Weixin NetType/WIFI Language/zh_CN ABI/arm64").addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/wxpic,image/tpg,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9").addHeader("X-Requested-With", "com.tencent.mm").addHeader("Sec-Fetch-Site", "none").addHeader("Sec-Fetch-Mode", "navigate").addHeader("Sec-Fetch-User", "?1").addHeader("Sec-Fetch-Dest", "document").addHeader("Accept-Encoding", "gzip, deflate").addHeader("Accept-Language", "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7").url("https://tgk-wcaime.wahlap.com/wc_auth/oauth/authorize/maimai-dx").build();
+        Request request = new Request.Builder().addHeader("Host", "tgk-wcaime.wahlap.com").addHeader("Upgrade-Insecure-Requests", "1").addHeader("User-Agent", WECHAT_USER_AGENT).addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9").addHeader("Sec-Fetch-Site", "none").addHeader("Sec-Fetch-Mode", "navigate").addHeader("Sec-Fetch-User", "?1").addHeader("Sec-Fetch-Dest", "document").addHeader("Accept-Encoding", "gzip, deflate, br").addHeader("Accept-Language", "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7").url("https://tgk-wcaime.wahlap.com/wc_auth/oauth/authorize/maimai-dx").build();
 
         Call call = client.newCall(request);
         Response response = call.execute();
@@ -209,11 +211,11 @@ public class WechatCrawler {
     }
 
     private void loginWechat(String wechatAuthUrl) throws Exception {
-        this.buildHttpClient(true);
+        this.buildHttpClient(false);
 
         Log.d(TAG, wechatAuthUrl);
 
-        Request request = new Request.Builder().addHeader("Host", "tgk-wcaime.wahlap.com").addHeader("Upgrade-Insecure-Requests", "1").addHeader("User-Agent", "Mozilla/5.0 (Linux; Android 12; IN2010 Build/RKQ1.211119.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/86.0.4240.99 XWEB/4317 MMWEBSDK/20220903 Mobile Safari/537.36 MMWEBID/363 MicroMessenger/8.0.28.2240(0x28001C57) WeChat/arm64 Weixin NetType/WIFI Language/zh_CN ABI/arm64").addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/wxpic,image/tpg,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9").addHeader("X-Requested-With", "com.tencent.mm").addHeader("Sec-Fetch-Site", "none").addHeader("Sec-Fetch-Mode", "navigate").addHeader("Sec-Fetch-User", "?1").addHeader("Sec-Fetch-Dest", "document").addHeader("Accept-Encoding", "gzip, deflate").addHeader("Accept-Language", "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7").get().url(wechatAuthUrl).build();
+        Request request = new Request.Builder().addHeader("Host", "tgk-wcaime.wahlap.com").addHeader("Upgrade-Insecure-Requests", "1").addHeader("User-Agent", WECHAT_USER_AGENT).addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9").addHeader("Sec-Fetch-Site", "none").addHeader("Sec-Fetch-Mode", "navigate").addHeader("Sec-Fetch-User", "?1").addHeader("Sec-Fetch-Dest", "document").addHeader("Accept-Encoding", "gzip, deflate, br").addHeader("Accept-Language", "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7").get().url(wechatAuthUrl).build();
 
         Call call = client.newCall(request);
         Response response = call.execute();
@@ -227,16 +229,21 @@ public class WechatCrawler {
 
         int code = response.code();
         writeLog(String.valueOf(code));
-        if (code >= 400) {
-            throw new Exception("登陆时出现错误，请重试！");
+
+        // Handle redirect manually to preserve User-Agent across domains
+        String location = response.headers().get("Location");
+        int maxRedirects = 10;
+        while (code >= 300 && code < 400 && location != null && maxRedirects-- > 0) {
+            response.close();
+            request = new Request.Builder().addHeader("User-Agent", WECHAT_USER_AGENT).url(location).get().build();
+            call = client.newCall(request);
+            response = call.execute();
+            code = response.code();
+            location = response.headers().get("Location");
         }
 
-        // Handle redirect manually
-        String location = response.headers().get("Location");
-        if (response.code() >= 300 && response.code() < 400 && location != null) {
-            request = new Request.Builder().url(location).get().build();
-            call = client.newCall(request);
-            call.execute().close();
+        if (code >= 400) {
+            throw new Exception("登陆时出现错误 (HTTP " + code + ")，请重试！");
         }
     }
 
