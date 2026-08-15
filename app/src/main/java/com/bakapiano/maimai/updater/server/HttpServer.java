@@ -39,7 +39,7 @@ public class HttpServer extends NanoHTTPD {
 
     // To avoid fu***ing cache of wechat webview client
     private Response redirectToAuthUrlWithRandomParm(IHTTPSession session) {
-        Response r = newFixedLengthResponse(Response.Status.REDIRECT, MIME_HTML, "");
+        Response r = newFixedLengthResponse(Response.Status.REDIRECT, "text/html; charset=utf-8", "");
         r.addHeader("Location", "http://" + HookHost + "/auth?random=" + System.currentTimeMillis());
         return r;
     }
@@ -47,10 +47,10 @@ public class HttpServer extends NanoHTTPD {
     private Response redirectToWechatAuthUrl(IHTTPSession session) {
         String url = CrawlerCaller.getWechatAuthUrl();
         if (url == null)
-            return newFixedLengthResponse(Response.Status.BAD_REQUEST, MIME_HTML, "");
+            return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/html; charset=utf-8", "");
         Log.d(TAG, url);
 
-        Response r = newFixedLengthResponse(Response.Status.REDIRECT, MIME_HTML, "");
+        Response r = newFixedLengthResponse(Response.Status.REDIRECT, "text/html; charset=utf-8", "");
         r.addHeader("Location", url);
         r.addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         r.addHeader("Pragma", "no-cache");
